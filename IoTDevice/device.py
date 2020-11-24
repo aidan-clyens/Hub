@@ -44,9 +44,10 @@ def main():
             "timestamp": datetime.datetime.now()
         }
 
-        print("Published message: " + json.dumps(message, cls=DateTimeEncoder) + " to: " + topic)
+        logger.info("Published message: " + json.dumps(message, cls=DateTimeEncoder) + " to: " + topic)
         client.publish(topic, json.dumps(message, cls=DateTimeEncoder), 1)
 
+        i += 1
         time.sleep(5)
 
 
