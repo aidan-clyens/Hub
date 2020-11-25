@@ -4,6 +4,7 @@ import time
 import datetime
 import logging
 import json
+import random
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -43,9 +44,10 @@ client.configureMQTTOperationTimeout(5)
 
 client.connect()
 i = 0
-data = 12.5
 while True:
     try:
+        data = random.uniform(0, 20)
+
         message = {
             "id": client_id,
             "sequence": i,
