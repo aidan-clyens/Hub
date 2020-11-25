@@ -32,11 +32,18 @@ client = mqtt.AWSIoTMQTTClient(client_id)
 client.configureEndpoint(endpoint, 8883)
 client.configureCredentials(path_to_root, path_to_key, path_to_cert)
 
-def main():
-    client.connect()
-    i = 0
-    data = 12.5
-    while True:
+client.configureAutoReconnectBackoffTime(1, 32, 20)
+client.configureOfflinePublishQueueing(-1)
+client.configureDrainingFrequency(2)
+client.configureConnectDisconnectTimeout(10)
+client.configureMQTTOperationTimeout(5)
+
+
+client.connect()
+i = 0
+data = 12.5
+while True:
+    try:
         message = {
             "id": client_id,
             "sequence": i,
@@ -44,16 +51,12 @@ def main():
             "timestamp": datetime.datetime.now()
         }
 
-        logger.info("Published message: " + json.dumps(message, cls=DateTimeEncoder) + " to: " + topic)
+        logger.info("Publishing message: " + json.dumps(message, cls=DateTimeEncoder) + " to: " + topic)
         client.publish(topic, json.dumps(message, cls=DateTimeEncoder), 1)
 
         i += 1
-        time.sleep(5)
-
-
-if __name__ == '__main__':
-    try:
-        main()
+        time.sleep(10)
+    except KeyboardInterrupt:
+        exit()
     except:
-        print("Exiting")
-        client.disconnect()
+        logger.error("Lost connection, attempting retry")
