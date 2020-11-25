@@ -19,6 +19,8 @@ path_to_key = config.path_to_key
 path_to_root = config.path_to_root
 topic = config.topic
 
+interval = 5 * 60
+
 
 logger = logging.getLogger("AWSIoTPythonSDK.core")
 logger.setLevel(logging.DEBUG)
@@ -55,7 +57,7 @@ while True:
         client.publish(topic, json.dumps(message, cls=DateTimeEncoder), 1)
 
         i += 1
-        time.sleep(10)
+        time.sleep(interval)
     except KeyboardInterrupt:
         exit()
     except:
