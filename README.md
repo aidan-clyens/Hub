@@ -8,7 +8,7 @@
 2. Add the following lines to *~/.bashrc*
 ```
 sleep 10
-screen /home/pi/Programs/FYDP/IoTDevice/start.sh
-screen python3 /home/pi/Programs/FYDP/Alexa/run_alexa.py
+screen -d -m /home/pi/Programs/FYDP/IoTDevice/start.sh
+screen -d -m /home/pi/Programs/FYDP/Alexa/run_alexa.sh
 ```
 Replace the project directory as necessary
