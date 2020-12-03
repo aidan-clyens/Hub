@@ -28,6 +28,9 @@ pip install spidev gpiozero
 4. Copy *config.json* file to this directory
 5. Run `./install.sh`
 
+## Running
+`python3 run_alexa.py`
+
 
 ## Resources
 https://wiki.seeedstudio.com/ReSpeaker_4_Mic_Array_for_Raspberry_Pi/
