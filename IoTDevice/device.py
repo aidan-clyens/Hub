@@ -5,12 +5,20 @@ import datetime
 import logging
 import json
 import random
+import os
 
 
 class DateTimeEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (datetime.datetime)):
             return obj.isoformat()
+
+
+if not os.path.exists(config.path_to_cert) or \
+    not os.path.exists(config.path_to_key) or \
+    not os.path.exists(config.path_to_root):
+    print("Error: Certificate files do not exist. Please get them from AWS and edit config.py.")
+    exit()
 
 
 endpoint = config.endpoint
