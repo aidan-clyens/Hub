@@ -9,19 +9,20 @@
 4. Update *config.py* with paths to certificates
 
 ### Install Dependencies
-1. Install required packages with `pip install -r requirements.txt`
-2. Install submodules with `git submodule update --init`
-3. Install required libraries
+1. Python 3 is required. Also ensure that the user is the owner of the current directory before proceeding.
+2. Install required packages with `pip install -r requirements.txt`
+3. Install submodules with `git submodule update --init`
+4. Install required libraries
 ```
 sudo apt-get install libbluetooth-dev
 sudo apt-get install libboost-all-dev
 
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 ```
 4. Install *PyBluez*
 ```
 cd pybluez
-sudo python3 setup.py install
+python setup.py install
 ```
 
 ## Usage
