@@ -9,23 +9,23 @@
 4. Update *config.py* with paths to certificates
 
 ### Install Dependencies
-1. Python 3 is required. Also ensure that the user is the owner of the current directory before proceeding.
-2. Install submodules with `git submodule update --init`
-3. Install required libraries
+1. Python 3 is required. Note script must be run as root.
+2. Install submodules with `git submodule update --init`.
+3. Install required libraries.
 ```
 sudo apt-get install libbluetooth-dev
 sudo apt-get install libboost-all-dev
 ```
-4. Install *PyBluez*
+4. Install *PyBluez*.
 ```
 cd pybluez
 sudo python3 setup.py install
 ```
-5. Install other packages
+5. Install other packages.
 ```
-pip3 install AWSIoTPythonSDK
-pip3 install gattlib
+sudo pip3 install AWSIoTPythonSDK
+sudo pip3 install gattlib
 ```
 
 ## Usage
-`python3 device.py`
+`sudo python3 device.py`
