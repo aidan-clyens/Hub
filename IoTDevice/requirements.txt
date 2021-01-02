@@ -1,3 +1,0 @@
-AWSIoTPythonSDK==1.4.9
-gattlib==0.20201113
-pkg-resources==0.0.0
