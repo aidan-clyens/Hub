@@ -1,2 +1,3 @@
 cd /home/pi/Programs/FYDP/IoTDevice
-python3 device.py
+source venv/bin/activate
+python device.py
