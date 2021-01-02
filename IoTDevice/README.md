@@ -18,10 +18,10 @@ sudo apt-get install libboost-all-dev
 
 pip3 install -r requirements.txt
 ```
-4. Install *pybluez*
+4. Install *PyBluez*
 ```
 cd pybluez
-python setup.py install
+sudo python3 setup.py install
 ```
 
 ## Usage
