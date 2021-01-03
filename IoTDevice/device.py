@@ -14,61 +14,107 @@ class DateTimeEncoder(json.JSONEncoder):
             return obj.isoformat()
 
 
-if not os.path.exists(config.path_to_cert) or \
-    not os.path.exists(config.path_to_key) or \
-    not os.path.exists(config.path_to_root):
-    print("Error: Certificate files do not exist. Please get them from AWS and edit config.py.")
-    exit()
+class MQTTClient:
+    sequence_num = 0
+
+    def __init__(self, client_id, endpoint, root_path, key_path, cert_path):
+        self.client_id = client_id
+
+        self.shadow_client = mqtt.AWSIoTMQTTShadowClient(client_id)
+
+        self.shadow_client.configureEndpoint(endpoint, 8883)
+        self.shadow_client.configureCredentials(root_path, key_path, cert_path)
+
+        self.shadow_client.configureAutoReconnectBackoffTime(1, 32, 20)
+        self.shadow_client.configureConnectDisconnectTimeout(10)
+        self.shadow_client.configureMQTTOperationTimeout(5)
+
+        self.shadow_client.onOnline = self.on_online_callback
+        self.shadow_client.onOffline = self.on_offline_callback
+
+        self.client = self.shadow_client.getMQTTConnection()
+
+        self.online = False
+    
+    def __del__(self):
+        self.disconnect()
+
+    def connect(self):
+        if not self.online:
+            self.shadow_client.connect()
+            print(f"{self.client_id} connected")
+
+    def disconnect(self):
+        if self.online:
+            self.shadow_client.disconnect()
+            print(f"{self.client_id} disconnected")
+
+    def publish(self, topic, data):
+        self.connect()
+        if self.online:
+            message = {
+                "id": self.client_id,
+                "sequence": self.sequence_num,
+                "data": data,
+                "timestamp": datetime.datetime.now()
+            }
+
+            try:
+                self.client.publish(topic, json.dumps(message, cls=DateTimeEncoder), 1)
+                self.sequence_num += 1
+            except:
+                print("Error: Cannot publish message")
+        else:
+            print("Not connected. Cannot publish message")
+
+    def on_online_callback(self):
+        print(f"{self.client_id} online")
+        self.online = True
+    
+    def on_offline_callback(self):
+        print(f"{self.client_id} offline")
+        self.online = False
 
 
-endpoint = config.endpoint
-client_id = config.client_id
-path_to_cert = config.path_to_cert
-path_to_key = config.path_to_key
-path_to_root = config.path_to_root
-topic = config.topic
+def main():
+    # Check for AWS IoT certificates
+    if not os.path.exists(config.path_to_cert) or \
+        not os.path.exists(config.path_to_key) or \
+        not os.path.exists(config.path_to_root):
+        print("Error: Certificate files do not exist. Please get them from AWS and edit config.py.")
+        exit()
 
-interval = 5 * 60
+    endpoint = config.endpoint
+    client_id = config.client_id
+    path_to_cert = config.path_to_cert
+    path_to_key = config.path_to_key
+    path_to_root = config.path_to_root
+    topic = config.topic
 
+    # Configure logger
+    logger = logging.getLogger("AWSIoTPythonSDK.core")
+    logger.setLevel(logging.DEBUG)
+    streamHandler = logging.StreamHandler()
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    streamHandler.setFormatter(formatter)
+    logger.addHandler(streamHandler)
 
-logger = logging.getLogger("AWSIoTPythonSDK.core")
-logger.setLevel(logging.DEBUG)
-streamHandler = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-streamHandler.setFormatter(formatter)
-logger.addHandler(streamHandler)
+    # Configure MQTT client
+    client = MQTTClient(client_id, endpoint, path_to_root, path_to_key, path_to_cert)
+    client.connect()
 
-
-client = mqtt.AWSIoTMQTTClient(client_id)
-client.configureEndpoint(endpoint, 8883)
-client.configureCredentials(path_to_root, path_to_key, path_to_cert)
-
-client.configureAutoReconnectBackoffTime(1, 32, 20)
-client.configureOfflinePublishQueueing(-1)
-client.configureDrainingFrequency(2)
-client.configureConnectDisconnectTimeout(10)
-client.configureMQTTOperationTimeout(5)
-
-
-client.connect()
-i = 0
-while True:
-    try:
+    interval = 5 * 60
+    while True:
         data = random.uniform(0, 20)
 
-        message = {
-            "id": client_id,
-            "sequence": i,
-            "data": data,
-            "timestamp": datetime.datetime.now()
-        }
+        logger.info("Publishing data: " + str(data) + " to: " + topic)
+        client.publish(topic, data)
 
-        logger.info("Publishing message: " + json.dumps(message, cls=DateTimeEncoder) + " to: " + topic)
-        client.publish(topic, json.dumps(message, cls=DateTimeEncoder), 1)
-
-        i += 1
         time.sleep(interval)
+
+
+if __name__ == '__main__':
+    try:
+        main()
     except KeyboardInterrupt:
         exit()
-    except:
-        logger.error("Lost connection, attempting retry")
