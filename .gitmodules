@@ -4,6 +4,3 @@
 [submodule "Alexa/4mics_hat"]
 	path = Alexa/4mics_hat
 	url = https://github.com/respeaker/4mics_hat.git
-[submodule "IoTDevice/pybluez"]
-	path = IoTDevice/pybluez
-	url = git@github.com:pybluez/pybluez.git

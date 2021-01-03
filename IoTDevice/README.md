@@ -14,14 +14,10 @@
 3. Install required libraries.
 ```
 sudo apt-get install libbluetooth-dev
-sudo apt-get install libboost-all-dev
+sudo apt-get install libboost-python-dev
+sudo apt-get install libboost-thread-dev
 ```
-4. Install *PyBluez*.
-```
-cd pybluez
-sudo python3 setup.py install
-```
-5. Install other packages.
+4. Install other packages.
 ```
 sudo pip3 install AWSIoTPythonSDK
 sudo pip3 install gattlib

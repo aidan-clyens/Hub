@@ -1,4 +1,4 @@
-from bluetooth.ble import DiscoveryService, GATTRequester
+from gattlib import DiscoveryService, GATTRequester
 
 
 target_address = "0C:61:CF:A3:09:3E"
