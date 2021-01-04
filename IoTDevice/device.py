@@ -1,4 +1,5 @@
 from mqtt_client import MQTTClient
+from ble_host import BLEHost
 
 import config
 import time
@@ -22,6 +23,8 @@ def main():
     path_to_root = config.path_to_root
     topic = config.topic
 
+    device_address = config.device_address
+
     # Configure logger
     logger = logging.getLogger("AWSIoTPythonSDK.core")
     logger.setLevel(logging.DEBUG)
@@ -34,6 +37,15 @@ def main():
     client = MQTTClient(client_id, endpoint, path_to_root, path_to_key, path_to_cert)
     client.logger = logger
     client.connect()
+
+    # Configure BLE host and connect to peripheral device
+    ble = BLEHost()
+    ble.logger = logger
+
+    while not ble.scan(device_address):
+        pass
+
+    ble.connect(device_address)
 
     interval = 5 * 60
     while True:
