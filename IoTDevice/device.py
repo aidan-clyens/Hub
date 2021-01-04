@@ -3,7 +3,6 @@ from ble_host import BLEHost
 
 import config
 import time
-import logging
 import random
 import os
 
@@ -25,22 +24,12 @@ def main():
 
     device_address = config.device_address
 
-    # Configure logger
-    logger = logging.getLogger("AWSIoTPythonSDK.core")
-    logger.setLevel(logging.DEBUG)
-    streamHandler = logging.StreamHandler()
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    streamHandler.setFormatter(formatter)
-    logger.addHandler(streamHandler)
-
     # Configure MQTT client
     client = MQTTClient(client_id, endpoint, path_to_root, path_to_key, path_to_cert)
-    client.logger = logger
     client.connect()
 
     # Configure BLE host and connect to peripheral device
     ble = BLEHost()
-    ble.logger = logger
 
     while not ble.scan(device_address):
         pass

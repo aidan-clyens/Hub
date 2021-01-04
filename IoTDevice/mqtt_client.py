@@ -1,6 +1,7 @@
 import AWSIoTPythonSDK.MQTTLib as mqtt
 import datetime
 import json
+import logging
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -10,12 +11,20 @@ class DateTimeEncoder(json.JSONEncoder):
 
 
 class MQTTClient:
-    logger = None
     sequence_num = 0
 
     def __init__(self, client_id, endpoint, root_path, key_path, cert_path):
         self.client_id = client_id
 
+        # Configure logger
+        self.logger = logging.getLogger("AWSIoTPythonSDK.core")
+        self.logger.setLevel(logging.DEBUG)
+        streamHandler = logging.StreamHandler()
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        streamHandler.setFormatter(formatter)
+        self.logger.addHandler(streamHandler)
+
+        # Configure MQTT shadow client
         self.shadow_client = mqtt.AWSIoTMQTTShadowClient(client_id)
 
         self.shadow_client.configureEndpoint(endpoint, 8883)
@@ -38,14 +47,12 @@ class MQTTClient:
     def connect(self):
         if not self.online:
             self.shadow_client.connect()
-            if self.logger:
-                self.logger.info(f"{self.client_id} connected")
+            self.logger.info(f"{self.client_id} connected")
 
     def disconnect(self):
         if self.online:
             self.shadow_client.disconnect()
-            if self.logger:
-                self.logger.info(f"{self.client_id} disconnected")
+            self.logger.info(f"{self.client_id} disconnected")
 
     def publish(self, topic, data):
         self.connect()
@@ -60,21 +67,16 @@ class MQTTClient:
             try:
                 self.client.publish(topic, json.dumps(message, cls=DateTimeEncoder), 1)
                 self.sequence_num += 1
-                if self.logger:
-                    self.logger.info("Published data: " + json.dumps(message, cls=DateTimeEncoder) + " to: " + topic)
+                self.logger.info("Published data: " + json.dumps(message, cls=DateTimeEncoder) + " to: " + topic)
             except:
-                if self.logger:
-                    self.logger.error("Error: Cannot publish message")
+                self.logger.error("Error: Cannot publish message")
         else:
-            if self.logger:
-                self.logger.error("Not connected. Cannot publish message")
+            self.logger.error("Not connected. Cannot publish message")
 
     def on_online_callback(self):
-        if self.logger:
-            self.logger.info(f"{self.client_id} online")
+        self.logger.debug(f"{self.client_id} online")
         self.online = True
     
     def on_offline_callback(self):
-        if self.logger:
-            self.logger.info(f"{self.client_id} offline")
+        self.logger.debug(f"{self.client_id} offline")
         self.online = False
