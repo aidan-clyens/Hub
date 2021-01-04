@@ -2,6 +2,7 @@ import os
 import subprocess
 import shlex
 import sys
+import logging
 
 sys.path.insert(1, "4mics_hat")
 from pixels import Pixels, pixels
@@ -19,19 +20,32 @@ debug_flag = ""
 
 class Alexa:
     def __init__(self):
+        # Configure logger
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        streamHandler = logging.StreamHandler()
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        streamHandler.setFormatter(formatter)
+        self.logger.addHandler(streamHandler)
+
+        # Configure LEDs
         self.pixels = pixels
         self.pixels.pattern = AlexaLedPattern(show=pixels.show)
 
         self.env = os.environ.copy()
         self.env["PO_ALSA_PLUGHW"] = "1"
 
+        self.started = False
+
     def __del__(self):
         self.pixels.off()
 
     def start(self):
         cmd = f"{sample_app} {config_path} {models_path} {debug_flag}"
-        print(cmd)
+        self.logger.debug(cmd)
         process = subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE, env=self.env)
+
+        self.started = True
 
         while True:
             output = process.stdout.readline()
@@ -51,19 +65,19 @@ class Alexa:
                 break
 
     def idle(self):
-        print("Idle")
+        self.logger.info("Idle")
         self.pixels.off()
 
     def listening(self):
-        print("Listening")
+        self.logger.info("Listening")
         self.pixels.wakeup()
 
     def thinking(self):
-        print("Thinking")
+        self.logger.info("Thinking")
         self.pixels.think()
 
     def speaking(self):
-        print("Speaking")
+        self.logger.info("Speaking")
         self.pixels.speak()
 
 
