@@ -5,6 +5,27 @@ import config
 import time
 import random
 import os
+import threading
+
+
+def mqtt_function(client, topic):
+    interval = 5 * 60
+
+    # Main loop
+    while True:
+        data = random.uniform(0, 20)
+        client.publish(topic, data)
+        time.sleep(interval)
+
+
+def ble_function(ble, device_address):
+    while not ble.scan(device_address):
+        pass
+    ble.connect(device_address)
+
+    # Main loop
+    while True:
+        pass
 
 
 def main():
@@ -31,18 +52,16 @@ def main():
     # Configure BLE host and connect to peripheral device
     ble = BLEHost()
 
-    while not ble.scan(device_address):
-        pass
+    # Create and start threads
+    mqtt_thread = threading.Thread(target=mqtt_function, args=(client, topic), daemon=True)
+    ble_thread = threading.Thread(target=ble_function, args=(ble, device_address), daemon=True)
 
-    ble.connect(device_address)
+    mqtt_thread.start()
+    ble_thread.start()
 
-    interval = 5 * 60
-    while True:
-        data = random.uniform(0, 20)
-
-        client.publish(topic, data)
-
-        time.sleep(interval)
+    # Wait until threads exit
+    mqtt_thread.join()
+    ble_thread.join()
 
 
 if __name__ == '__main__':
