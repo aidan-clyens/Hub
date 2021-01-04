@@ -4,4 +4,5 @@ path_to_cert = ""
 path_to_key = ""
 path_to_root = ""
 topic = ""
+device_address = ""
 
