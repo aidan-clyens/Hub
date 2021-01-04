@@ -8,10 +8,11 @@ from pixels import Pixels, pixels
 from alexa_led_pattern import AlexaLedPattern
 
 
-home_path = "/home/pi/Programs/FYDP/Alexa/alexa"
-source_path = home_path + "/build/SampleApp/src"
-config_path = home_path + "/build/Integration/AlexaClientSDKConfig.json"
-models_path = home_path + "/third-party/alexa-rpi/models"
+source_path = os.path.join(os.getcwd(), "alexa/build/SampleApp/src")
+config_path = os.path.join(os.getcwd(), "alexa/build/Integration/AlexaClientSDKConfig.json")
+models_path = os.path.join(os.getcwd(), "alexa/third-party/alexa-rpi/models")
+
+sample_app = os.path.join(source_path, "SampleApp")
 
 debug_flag = ""
 
@@ -24,7 +25,7 @@ env["PO_ALSA_PLUGHW"] = "1"
 
 os.chdir(source_path)
 
-cmd = f"./SampleApp {config_path} {models_path} {debug_flag}"
+cmd = f"{sample_app} {config_path} {models_path} {debug_flag}"
 print(cmd)
 process = subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE, env=env)
 
