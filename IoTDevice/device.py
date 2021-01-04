@@ -15,6 +15,7 @@ class DateTimeEncoder(json.JSONEncoder):
 
 
 class MQTTClient:
+    logger = None
     sequence_num = 0
 
     def __init__(self, client_id, endpoint, root_path, key_path, cert_path):
@@ -42,12 +43,14 @@ class MQTTClient:
     def connect(self):
         if not self.online:
             self.shadow_client.connect()
-            print(f"{self.client_id} connected")
+            if self.logger:
+                self.logger.info(f"{self.client_id} connected")
 
     def disconnect(self):
         if self.online:
             self.shadow_client.disconnect()
-            print(f"{self.client_id} disconnected")
+            if self.logger:
+                self.logger.info(f"{self.client_id} disconnected")
 
     def publish(self, topic, data):
         self.connect()
@@ -62,17 +65,23 @@ class MQTTClient:
             try:
                 self.client.publish(topic, json.dumps(message, cls=DateTimeEncoder), 1)
                 self.sequence_num += 1
+                if self.logger:
+                    self.logger.info("Published data: " + json.dumps(message, cls=DateTimeEncoder) + " to: " + topic)
             except:
-                print("Error: Cannot publish message")
+                if self.logger:
+                    self.logger.error("Error: Cannot publish message")
         else:
-            print("Not connected. Cannot publish message")
+            if self.logger:
+                self.logger.error("Not connected. Cannot publish message")
 
     def on_online_callback(self):
-        print(f"{self.client_id} online")
+        if self.logger:
+            self.logger.info(f"{self.client_id} online")
         self.online = True
     
     def on_offline_callback(self):
-        print(f"{self.client_id} offline")
+        if self.logger:
+            self.logger.info(f"{self.client_id} offline")
         self.online = False
 
 
@@ -101,13 +110,13 @@ def main():
 
     # Configure MQTT client
     client = MQTTClient(client_id, endpoint, path_to_root, path_to_key, path_to_cert)
+    client.logger = logger
     client.connect()
 
     interval = 5 * 60
     while True:
         data = random.uniform(0, 20)
 
-        logger.info("Publishing data: " + str(data) + " to: " + topic)
         client.publish(topic, data)
 
         time.sleep(interval)
