@@ -1,32 +1,28 @@
 # Amazon Alexa
-
 ## Getting Started
-### Seeed Voice Card
-1. Install Seeed voice card driver
+### Install Dependencies
+1. Install submodules `git submodule update --init`
+2. Install Seeed voice card driver
 ```
-sudo apt-get update
-sudo apt-get upgrade
-git clone https://github.com/respeaker/seeed-voicecard.git
-cd seeed-voicecard
+cd rpi-hub/alexa/seeed-voicecard
 sudo ./install.sh  
-reboot
+sudo reboot
 ```
-2. Select Raspberry Pi audio output in `raspi_config`
-3. Check sound card with `arecord -L`
+3. Select Raspberry Pi audio output in `raspi_config`
+4. Check sound card with `arecord -L`
+5. Enable SPI in `raspi-config` for APA102 LEDs package
+6. Install dependencies for APA102 LEDs library
+```
+pip3 install spidev gpiozero
+```
 
-### APA102 LEDs
-1. Enable SPI in `raspi-config`
-2. Install APA102 LEDs library
-```
-git clone https://github.com/respeaker/4mics_hat.git
-pip install spidev gpiozero
-```
 ### Alexa Voice Service
 1. Sign into an Amazon Developer account
 2. Go to Alexa Voice Service -> Products -> Add New Product
 3. Create new product and Security Profile, make sure to download config file
 4. Copy *config.json* file to this directory
 5. Run `./install.sh`
+6. Run the AVS SDK SampleApp for the first time and authorize using the code provided
 
 ## Running
 `python3 run_alexa.py`
