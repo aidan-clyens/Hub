@@ -4,14 +4,15 @@ import shlex
 import sys
 import logging
 
-sys.path.insert(1, "4mics_hat")
+package_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, os.path.join(package_dir, "4mics_hat"))
 from pixels import Pixels, pixels
 from alexa_led_pattern import AlexaLedPattern
 
 
-source_path = os.path.join(os.getcwd(), "alexa/build/SampleApp/src")
-config_path = os.path.join(os.getcwd(), "alexa/build/Integration/AlexaClientSDKConfig.json")
-models_path = os.path.join(os.getcwd(), "alexa/third-party/alexa-rpi/models")
+source_path = os.path.join(package_dir, "avs-sdk/build/SampleApp/src")
+config_path = os.path.join(package_dir, "avs-sdk/build/Integration/AlexaClientSDKConfig.json")
+models_path = os.path.join(package_dir, "avd-sdk/third-party/alexa-rpi/models")
 
 sample_app = os.path.join(source_path, "SampleApp")
 
@@ -30,7 +31,7 @@ class Alexa:
 
         # Configure LEDs
         self.pixels = pixels
-        self.pixels.pattern = AlexaLedPattern(show=pixels.show)
+        self.pixels.pattern = AlexaLedPattern(show=self.pixels.show)
 
         self.env = os.environ.copy()
         self.env["PO_ALSA_PLUGHW"] = "1"
@@ -51,6 +52,9 @@ class Alexa:
             output = process.stdout.readline()
             if output:
                 output = output.decode().replace("\n", "").strip().lower()
+                if "to authorize" in output:
+                    code = output[output.find("code:")+5:].upper()
+                    self.logger.warning(f"Authorize at https://amazon.com/us/code with code: {code}")
                 if "idle" in output:
                     self.idle()
                 elif "listening" in output:

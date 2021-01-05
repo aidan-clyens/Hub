@@ -1,5 +1,6 @@
 from mqtt_client import MQTTClient
 from ble_host import BLEHost
+from Alexa import Alexa
 
 import config
 import time
@@ -28,6 +29,10 @@ def ble_function(ble, device_address):
         pass
 
 
+def alexa_function(alexa):
+    alexa.start()
+
+
 def main():
     # Check for AWS IoT certificates
     if not os.path.exists(config.path_to_cert) or \
@@ -52,16 +57,22 @@ def main():
     # Configure BLE host and connect to peripheral device
     ble = BLEHost()
 
+    # Configure Alexa
+    alexa = Alexa()
+
     # Create and start threads
     mqtt_thread = threading.Thread(target=mqtt_function, args=(client, topic), daemon=True)
     ble_thread = threading.Thread(target=ble_function, args=(ble, device_address), daemon=True)
+    alexa_thread = threading.Thread(target=alexa_function, args=(alexa, ), daemon=True)
 
     mqtt_thread.start()
     ble_thread.start()
+    alexa_thread.start()
 
     # Wait until threads exit
     mqtt_thread.join()
     ble_thread.join()
+    alexa_thread.join()
 
 
 if __name__ == '__main__':

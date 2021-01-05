@@ -1,7 +1,10 @@
-if ! [ -d "alexa" ]; then
-    mkdir alexa
+SDK_DIR=avs-sdk
+
+
+if ! [ -d "$SDK_DIR" ]; then
+    mkdir $SDK_DIR
 fi
-cd alexa
+cd $SDK_DIR
 
 if ! [ -f "setup.sh" ]; then
     wget https://raw.githubusercontent.com/alexa/avs-device-sdk/master/tools/Install/setup.sh 
@@ -16,7 +19,7 @@ if ! [ -f "pi.sh" ]; then
 fi
 
 if [ -f "../config.json" ]; then
-    mv ../config.json ./
+    cp ../config.json ./
 fi
 
 if [ -f "config.json" ]; then
