@@ -1,6 +1,6 @@
 from mqtt_client import MQTTClient
 from ble_host import BLEHost
-from Alexa import Alexa
+from alexa import Alexa
 
 import config
 import time
@@ -20,13 +20,15 @@ def mqtt_function(client, topic):
 
 
 def ble_function(ble, device_address):
-    while not ble.scan(device_address):
-        pass
-    ble.connect(device_address)
-
+    connected = False
+    
     # Main loop
     while True:
-        pass
+        if connected:
+            pass
+        else:
+            devices = ble.scan(5.0)
+            connected = ble.connect(device_address)
 
 
 def alexa_function(alexa):

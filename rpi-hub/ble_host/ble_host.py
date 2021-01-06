@@ -1,44 +1,56 @@
-from gattlib import DiscoveryService, GATTRequester
+from bluepy import btle
 import logging
 
 
-name_uuid = "00002a00-0000-1000-8000-00805f9b34fb"
+class ScanDelegate(btle.DefaultDelegate):
+    def __init__(self, logger):
+        btle.DefaultDelegate.__init__(self)
+        self.logger = logger
+
+    def handleDiscovery(self, dev, isNewDev, isNewData):
+        if isNewDev:
+            status = "new"
+        elif isNewData:
+            status = "update"
+        else:
+            status = "old"
+
+        self.logger.debug(f"({status}) {dev.addr} - {dev.addrType} - {dev.rssi} - Connectable: {dev.connectable}")
 
 
 class BLEHost:
-    discovery_service = None
-    requester = None
+    connected_device = None
 
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        # Configure logger
+        self.logger = logging.getLogger(__file__)
         self.logger.setLevel(logging.DEBUG)
         streamHandler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         streamHandler.setFormatter(formatter)
         self.logger.addHandler(streamHandler)
 
-    def scan(self, target_address, timeout=2):
+        # Configure scanner
+        self.scanner = btle.Scanner().withDelegate(ScanDelegate(self.logger))
+
+    def scan(self, timeout=2):
         self.logger.info("Scanning...")
-        self.discovery_service = DiscoveryService("hci0")
-        self.devices = self.discovery_service.discover(timeout)
-
-        if not target_address in self.devices:
-            self.logger.info(f"Device {target_address} not found")
-            return False
-
-        return True
+        self.devices = self.scanner.scan(timeout)
+        return self.devices
 
     def connect(self, target_address):
-        self.logger.info(f"Found device {target_address}. Connecting...")
-        self.requester = GATTRequester(target_address)
-
-        name = self.get_name()
-        self.logger.info(f"Connected to: {name.decode()}")
-    
-    def get_name(self):
-        if self.requester is None:
-            self.logger.error("Error. No device is connected")
-            return ""
+        target_address = target_address.lower()
+        self.logger.info(f"Connecting to {target_address}...")
+        for d in self.devices:
+            if d.addr == target_address:
+                if d.connectable:
+                    self.connected_device = btle.Peripheral(d)
+                    self.logger.info(f"Successfully connected to {target_address}")
+                    return True
+                else:
+                    self.logger.info(f"Device {target_address} is not connectable")
+                    return False
         
-        return self.requester.read_by_uuid(name_uuid)[0]
+        self.logger.info(f"Device {target_address} not found")
+        return False
 
