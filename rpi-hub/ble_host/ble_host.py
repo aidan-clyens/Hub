@@ -68,10 +68,8 @@ class BLEDevice:
         self._setup_services()
         self.name = self._get_name()
 
-    def get_state(self):
-        state = self.peripheral.getState()
-        self.logger.debug(f"{self.name}: {state}")
-        return state
+    def is_connected(self):
+        return self._get_state() == "conn"
 
     def _setup_services(self):
         services = self.peripheral.getServices()
@@ -87,6 +85,11 @@ class BLEDevice:
             for c in chars:
                 self.characteristics[c.uuid] = c
                 self.logger.debug(f"{c}")
+
+    def _get_state(self):
+        state = self.peripheral.getState()
+        self.logger.debug(f"{self.name}: State = {state}")
+        return state
     
     def _get_name(self):
         if NAME_UUID in self.characteristics.keys():

@@ -27,7 +27,7 @@ def ble_function(ble, device_address):
     # Main loop
     while True:
         if connected:
-            if device.get_state() == "disc":
+            if not device.is_connected():
                 connected = False
             else:
                 time.sleep(heartbeat)
