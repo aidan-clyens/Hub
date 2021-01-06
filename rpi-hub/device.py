@@ -21,14 +21,21 @@ def mqtt_function(client, topic):
 
 def ble_function(ble, device_address):
     connected = False
+    heartbeat = 30
+    device = None
     
     # Main loop
     while True:
         if connected:
-            pass
+            if device.get_state() == "disc":
+                connected = False
+            else:
+                time.sleep(heartbeat)
         else:
             devices = ble.scan(5.0)
             connected = ble.connect(device_address)
+            if connected:
+                device = ble.connected_device
 
 
 def alexa_function(alexa):

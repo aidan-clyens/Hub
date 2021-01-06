@@ -18,6 +18,7 @@ class ScanDelegate(btle.DefaultDelegate):
         self.logger.debug(f"({status}) {dev.addr} - {dev.addrType} - {dev.rssi} - Connectable: {dev.connectable}")
 
 
+
 class BLEHost:
     connected_device = None
 
@@ -44,7 +45,7 @@ class BLEHost:
         for d in self.devices:
             if d.addr == target_address:
                 if d.connectable:
-                    self.connected_device = btle.Peripheral(d)
+                    self.connected_device = BLEDevice(self.logger, d)
                     self.logger.info(f"Successfully connected to {target_address}")
                     return True
                 else:
@@ -53,4 +54,16 @@ class BLEHost:
         
         self.logger.info(f"Device {target_address} not found")
         return False
+
+
+class BLEDevice:
+    def __init__(self, logger, device):
+        self.logger = logger
+        self.address = device.addr
+        self.peripheral = btle.Peripheral(device)
+
+    def get_state(self):
+        state = self.peripheral.getState()
+        self.logger.debug(f"{self.address}: {state}")
+        return state
 
