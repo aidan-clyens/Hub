@@ -2,6 +2,9 @@ from bluepy import btle
 import logging
 
 
+NAME_UUID = btle.UUID("00002a00-0000-1000-8000-00805f9b34fb")
+
+
 class ScanDelegate(btle.DefaultDelegate):
     def __init__(self, logger):
         btle.DefaultDelegate.__init__(self)
@@ -46,7 +49,7 @@ class BLEHost:
             if d.addr == target_address:
                 if d.connectable:
                     self.connected_device = BLEDevice(self.logger, d)
-                    self.logger.info(f"Successfully connected to {target_address}")
+                    self.logger.info(f"Successfully connected to {self.connected_device.name} ({target_address})")
                     return True
                 else:
                     self.logger.info(f"Device {target_address} is not connectable")
@@ -62,8 +65,35 @@ class BLEDevice:
         self.address = device.addr
         self.peripheral = btle.Peripheral(device)
 
+        self._setup_services()
+        self.name = self._get_name()
+
     def get_state(self):
         state = self.peripheral.getState()
-        self.logger.debug(f"{self.address}: {state}")
+        self.logger.debug(f"{self.name}: {state}")
         return state
+
+    def _setup_services(self):
+        services = self.peripheral.getServices()
+        self.services = {}
+        self.characteristics = {}
+
+        self.logger.debug(f"{self.address}: Finding Services...")
+        for s in services:
+            self.services[s.uuid] = s
+            self.logger.debug(f"{s}")
+            chars = s.getCharacteristics()
+            self.logger.debug(f"{self.address}: Finding Characteristics for service: {s}...")
+            for c in chars:
+                self.characteristics[c.uuid] = c
+                self.logger.debug(f"{c}")
+    
+    def _get_name(self):
+        if NAME_UUID in self.characteristics.keys():
+            c = self.characteristics[NAME_UUID]
+            if c.supportsRead():
+                return c.read().decode("utf-8")
+        
+        return ""
+
 
