@@ -48,9 +48,12 @@ class BLEHost:
         for d in self.devices:
             if d.addr == target_address:
                 if d.connectable:
-                    self.connected_device = BLEDevice(self.logger, d)
-                    self.logger.info(f"Successfully connected to {self.connected_device.name} ({target_address})")
-                    return True
+                    try:
+                        self.connected_device = BLEDevice(self.logger, d)
+                        self.logger.info(f"Successfully connected to {self.connected_device.name} ({target_address})")
+                        return True
+                    except:
+                        return False
                 else:
                     self.logger.info(f"Device {target_address} is not connectable")
                     return False
@@ -67,6 +70,10 @@ class BLEDevice:
 
         self._setup_services()
         self.name = self._get_name()
+
+    def __del__(self):
+        if self.peripheral:
+            self.peripheral.disconnect()
 
     def is_connected(self):
         return self._get_state() == "conn"
