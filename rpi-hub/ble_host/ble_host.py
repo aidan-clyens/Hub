@@ -52,7 +52,8 @@ class BLEHost:
                         self.connected_device = BLEDevice(self.logger, d)
                         self.logger.info(f"Successfully connected to {self.connected_device.name} ({target_address})")
                         return True
-                    except:
+                    except Exception as e:
+                        self.logger.warning(str(e))
                         return False
                 else:
                     self.logger.info(f"Device {target_address} is not connectable")
@@ -69,11 +70,15 @@ class BLEDevice:
         self.peripheral = btle.Peripheral(device)
 
         self._setup_services()
-        self.name = self._get_name()
+        self.name = self.get_name()
 
     def __del__(self):
         if self.peripheral:
             self.peripheral.disconnect()
+
+    def get_name(self):
+        val = self._read_value(NAME_UUID)
+        return val.decode("utf-8")
 
     def is_connected(self):
         return self._get_state() == "conn"
@@ -98,12 +103,18 @@ class BLEDevice:
         self.logger.debug(f"{self.name}: State = {state}")
         return state
     
-    def _get_name(self):
-        if NAME_UUID in self.characteristics.keys():
-            c = self.characteristics[NAME_UUID]
+    def _read_value(self, uuid):
+        if uuid in self.characteristics.keys():
+            c = self.characteristics[uuid]
             if c.supportsRead():
-                return c.read().decode("utf-8")
-        
-        return ""
+                data = c.read()
+                self.logger.debug(f"READ {uuid}: {data} ({len(data)} bytes)")
+                return data
+            else:
+                self.logger.warning(f"{uuid} does not support READ")
+        else:
+            self.logger.warning(f"Characteristic with UUID {uuid} does not exist")
+
+        return b""
 
 
