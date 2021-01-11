@@ -1,28 +1,50 @@
-import AWSIoTPythonSDK.MQTTLib as mqtt
+"""MQTT Client class
+
+    Usage Example:
+        client = MQTTClient(client_id, endpoint, root_path, key_path, cert_path)
+        client.connect()
+        client.publish("ExampleTopic", 10)
+"""
+
+# Imports
 import datetime
 import json
 import logging
+import AWSIoTPythonSDK.MQTTLib as mqtt
 
 
+# Class definitions
 class DateTimeEncoder(json.JSONEncoder):
+    """Encode datetime."""
     def default(self, obj):
+        """Encode datetime."""
         if isinstance(obj, (datetime.datetime)):
             return obj.isoformat()
 
 
 class MQTTClient:
+    """MQTT client to connect to AWS IoT server."""
     sequence_num = 0
 
     def __init__(self, client_id, endpoint, root_path, key_path, cert_path):
+        """Constructor.
+
+        Args:
+            client_id: Name this of AWS IoT client.
+            endpoint: Endpoint for AWS IoT server.
+            root_path: Path to root file.
+            key_path: Path to key file.
+            cert_path: Path to cert file.
+        """
         self.client_id = client_id
 
         # Configure logger
         self.logger = logging.getLogger("AWSIoTPythonSDK.core")
         self.logger.setLevel(logging.DEBUG)
-        streamHandler = logging.StreamHandler()
+        stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        streamHandler.setFormatter(formatter)
-        self.logger.addHandler(streamHandler)
+        stream_handler.setFormatter(formatter)
+        self.logger.addHandler(stream_handler)
 
         # Configure MQTT shadow client
         self.shadow_client = mqtt.AWSIoTMQTTShadowClient(client_id)
@@ -40,21 +62,25 @@ class MQTTClient:
         self.client = self.shadow_client.getMQTTConnection()
 
         self.online = False
-    
+
     def __del__(self):
+        """Destructor."""
         self.disconnect()
 
     def connect(self):
+        """Connect to AWS IoT server."""
         if not self.online:
             self.shadow_client.connect()
             self.logger.info(f"{self.client_id} connected")
 
     def disconnect(self):
+        """Disconnect from AWS IoT server."""
         if self.online:
             self.shadow_client.disconnect()
             self.logger.info(f"{self.client_id} disconnected")
 
     def publish(self, topic, data):
+        """Publish data to an AWS IoT topic."""
         self.connect()
         if self.online:
             message = {
@@ -74,9 +100,11 @@ class MQTTClient:
             self.logger.error("Not connected. Cannot publish message")
 
     def on_online_callback(self):
+        """Callback for when MQTT client goes online."""
         self.logger.debug(f"{self.client_id} online")
         self.online = True
-    
+
     def on_offline_callback(self):
+        """Callback for when MQTT client goes offline."""
         self.logger.debug(f"{self.client_id} offline")
         self.online = False
