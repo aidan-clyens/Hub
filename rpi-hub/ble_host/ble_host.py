@@ -1,15 +1,40 @@
-from bluepy import btle
+"""BLE Host and ScanDelegate classes.
+
+    Usage Example:
+
+    host = BLEHost()
+    devices_list = host.scan(5.0)
+    is_connected = host.connect(ff:ff:ff:ff:ff:ff)
+"""
+
+# Imports
 import logging
+from bluepy import btle
 
 from .ble_device import BLEDevice
 
 
+# Class definitions
 class ScanDelegate(btle.DefaultDelegate):
+    """Callback for BLE scanning results."""
+
     def __init__(self, logger):
+        """Constructor
+
+        Args:
+            logger: Logger used by the BLE host
+        """
         btle.DefaultDelegate.__init__(self)
         self.logger = logger
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
+        """Handle discovery of new BLE device.
+
+        Args:
+            dev: BLE device object.
+            isNewDev: A boolean indicating whether device is new or not.
+            isNewData: A boolean indicating whether data is new or not.
+        """
         if isNewDev:
             status = "new"
         elif isNewData:
@@ -21,26 +46,44 @@ class ScanDelegate(btle.DefaultDelegate):
 
 
 class BLEHost:
+    """BLE host and scanner"""
     connected_device = None
 
     def __init__(self):
+        """Constructor."""
         # Configure logger
         self.logger = logging.getLogger(__file__)
         self.logger.setLevel(logging.DEBUG)
-        streamHandler = logging.StreamHandler()
+        stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        streamHandler.setFormatter(formatter)
-        self.logger.addHandler(streamHandler)
+        stream_handler.setFormatter(formatter)
+        self.logger.addHandler(stream_handler)
 
         # Configure scanner
         self.scanner = btle.Scanner().withDelegate(ScanDelegate(self.logger))
 
     def scan(self, timeout=2):
+        """Scan for BLE devices.
+
+        Args:
+            timeout: Timeout value for scanning in seconds.
+
+        Returns:
+            List of BLE device objects scanned.
+        """
         self.logger.info("Scanning...")
         self.devices = self.scanner.scan(timeout)
         return self.devices
 
     def connect(self, target_address):
+        """Connect to a target BLE device if it is found.
+
+        Args:
+            target_address: MAC address of target BLE device.
+
+        Returns:
+            Boolean indicating whether device was successfully connected to.
+        """
         target_address = target_address.lower()
         self.logger.info(f"Connecting to {target_address}...")
         for d in self.devices:
@@ -56,7 +99,6 @@ class BLEHost:
                 else:
                     self.logger.info(f"Device {target_address} is not connectable")
                     return False
-        
+
         self.logger.info(f"Device {target_address} not found")
         return False
-

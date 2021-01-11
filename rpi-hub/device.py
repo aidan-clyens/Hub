@@ -1,8 +1,11 @@
-from mqtt_client import MQTTClient
-from ble_host import BLEHost, SunlightService
-from alexa import Alexa
+"""Main Hub device program.
 
-from bluepy import btle
+This is the main program for the Hub device. This program connects to BLE peripheral device and listens for data.
+When data is received, it is forwarded to the MQTT client to be published to AWS IoT.
+This program also simultaneously runs the Alexa Voice Service.
+"""
+
+# Imports
 import config
 import time
 import random
@@ -10,19 +13,34 @@ import os
 import threading
 import enum
 import queue
+from bluepy import btle
+
+from mqtt_client import MQTTClient
+from ble_host import BLEHost, SunlightService
+from alexa import Alexa
 
 
+# Global variables
 sunlight_value_queue = queue.Queue()
 
 
-
+# Class definitions
 class BLEState(enum.Enum):
+    """BLE connection states."""
     SCANNING = 1
     FOUND_DEVICE = 2
     CONNECTED = 3
 
 
+# Global functions
 def mqtt_function(client, topic):
+    """MQTT main thread.
+
+    Args:
+        client: Connected MQTT client
+        topic: Topic to publish messages to
+    """
+
     # Main loop
     while True:
         value = sunlight_value_queue.get(block=True)
@@ -30,10 +48,17 @@ def mqtt_function(client, topic):
 
 
 def ble_function(ble, device_address):
+    """BLE main thread.
+
+    Args:
+        ble: BLE host to scan for devices
+        device_address: Target BLE device MAC address
+    """
+
     heartbeat = 30
     device = None
     service = None
-    
+
     ble_state = BLEState.SCANNING
 
     # Main loop
@@ -48,7 +73,7 @@ def ble_function(ble, device_address):
             device = ble.connected_device
             service = SunlightService(device)
             service.set_notifications(True)
-        
+
             ble_state = BLEState.CONNECTED
 
         elif ble_state == BLEState.CONNECTED:
@@ -61,10 +86,18 @@ def ble_function(ble, device_address):
 
 
 def alexa_function(alexa):
+    """Alexa main thread.
+
+    Args:
+        alexa: Alexa application wrapper
+    """
+
     alexa.start()
 
 
 def main():
+    """Main."""
+
     # Check for AWS IoT certificates
     if not os.path.exists(config.path_to_cert) or \
         not os.path.exists(config.path_to_key) or \
