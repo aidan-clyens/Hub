@@ -9,6 +9,11 @@ import random
 import os
 import threading
 import enum
+import queue
+
+
+sunlight_value_queue = queue.Queue()
+
 
 
 class BLEState(enum.Enum):
@@ -18,13 +23,10 @@ class BLEState(enum.Enum):
 
 
 def mqtt_function(client, topic):
-    interval = 5 * 60
-
     # Main loop
     while True:
-        data = random.uniform(0, 20)
-        client.publish(topic, data)
-        time.sleep(interval)
+        value = sunlight_value_queue.get(block=True)
+        client.publish(topic, value)
 
 
 def ble_function(ble, device_address):
@@ -52,7 +54,8 @@ def ble_function(ble, device_address):
         elif ble_state == BLEState.CONNECTED:
             try:
                 if device.wait_for_notifications(heartbeat):
-                    print(service.read_sunlight_value())
+                    value = service.read_sunlight_value()
+                    sunlight_value_queue.put(value)
             except btle.BTLEDisconnectError:
                 ble_state = BLEState.SCANNING
 
