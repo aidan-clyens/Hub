@@ -21,7 +21,7 @@ class BLEDevice:
         self.address = device.addr
         self.peripheral = btle.Peripheral(device)
 
-        self._setup_services()
+        self.setup_services()
         self.name = self.get_name()
 
     def __del__(self):
@@ -29,16 +29,16 @@ class BLEDevice:
             self.peripheral.disconnect()
 
     def get_name(self):
-        val = self._read_value(NAME_UUID)
+        val = self.read_value(NAME_UUID)
         return val.decode("utf-8")
 
     def wait_for_notifications(self, timeout=1):
         return self.peripheral.waitForNotifications(timeout)
 
     def is_connected(self):
-        return self._get_state() == "conn"
+        return self.get_state() == "conn"
 
-    def _setup_services(self):
+    def setup_services(self):
         services = self.peripheral.getServices()
         self.services = {}
         self.characteristics = {}
@@ -54,10 +54,12 @@ class BLEDevice:
                 self.logger.debug(f"{c}")
                 self.logger.debug(f"{c.propertiesToString()}")
 
-    def _set_notifications(self, uuid, value):
+    def set_notifications(self, uuid, value):
         if uuid in self.characteristics.keys():
             c = self.characteristics[uuid]
             if "notify" in c.propertiesToString().lower():
+                self.peripheral.setDelegate(NotificationDelegate(self.logger, c.getHandle()))
+
                 handle = c.getHandle() + 1
                 if value:
                     value_bytes = b"\x01\x00"
@@ -72,12 +74,17 @@ class BLEDevice:
         else:
             self.logger.warning(f"Characteristic with UUID {uuid} does not exist")
 
-    def _get_state(self):
-        state = self.peripheral.getState()
+    def get_state(self):
+        try:
+            state = self.peripheral.getState()
+        except Exception as e:
+            self.logger.warning(f"Error getting state: {e}")
+            state = "conn"
+
         self.logger.debug(f"{self.name}: State = {state}")
         return state
     
-    def _read_value(self, uuid):
+    def read_value(self, uuid):
         if uuid in self.characteristics.keys():
             c = self.characteristics[uuid]
             if c.supportsRead():
@@ -91,7 +98,7 @@ class BLEDevice:
 
         return b""
     
-    def _write_value(self, uuid, data):
+    def write_value(self, uuid, data):
         if uuid in self.characteristics.keys():
             c = self.characteristics[uuid]
             c.write(data)

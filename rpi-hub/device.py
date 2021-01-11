@@ -1,12 +1,20 @@
 from mqtt_client import MQTTClient
-from ble_host import BLEHost
+from ble_host import BLEHost, SunlightService
 from alexa import Alexa
 
+from bluepy import btle
 import config
 import time
 import random
 import os
 import threading
+import enum
+
+
+class BLEState(enum.Enum):
+    SCANNING = 1
+    FOUND_DEVICE = 2
+    CONNECTED = 3
 
 
 def mqtt_function(client, topic):
@@ -20,23 +28,33 @@ def mqtt_function(client, topic):
 
 
 def ble_function(ble, device_address):
-    connected = False
     heartbeat = 30
     device = None
+    service = None
     
+    ble_state = BLEState.SCANNING
+
     # Main loop
     while True:
-        if connected:
-            if not device.is_connected():
-                connected = False
-            else:
-                if device.wait_for_notifications(heartbeat):
-                    continue
-        else:
+        if ble_state == BLEState.SCANNING:
             devices = ble.scan(5.0)
             connected = ble.connect(device_address)
             if connected:
-                device = ble.connected_device
+                ble_state = BLEState.FOUND_DEVICE
+
+        elif ble_state == BLEState.FOUND_DEVICE:
+            device = ble.connected_device
+            service = SunlightService(device)
+            service.set_notifications(True)
+        
+            ble_state = BLEState.CONNECTED
+
+        elif ble_state == BLEState.CONNECTED:
+            try:
+                if device.wait_for_notifications(heartbeat):
+                    print(service.read_sunlight_value())
+            except btle.BTLEDisconnectError:
+                ble_state = BLEState.SCANNING
 
 
 def alexa_function(alexa):
