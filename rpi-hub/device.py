@@ -44,7 +44,7 @@ def mqtt_function(client, topic):
     # Main loop
     while True:
         value = sunlight_value_queue.get(block=True)
-        client.publish(topic, value)
+        client.publish(topic, int.from_bytes(value, byteorder="little"))
 
 
 def ble_function(ble, device_address):
@@ -72,15 +72,14 @@ def ble_function(ble, device_address):
         elif ble_state == BLEState.FOUND_DEVICE:
             device = ble.connected_device
             service = SunlightService(device)
-            service.set_notifications(True)
+            service.set_notifications(True, sunlight_value_queue)
 
             ble_state = BLEState.CONNECTED
 
         elif ble_state == BLEState.CONNECTED:
             try:
                 if device.wait_for_notifications(heartbeat):
-                    value = service.read_sunlight_value()
-                    sunlight_value_queue.put(value)
+                    continue
             except btle.BTLEDisconnectError:
                 ble_state = BLEState.SCANNING
 

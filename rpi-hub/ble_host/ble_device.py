@@ -20,16 +20,18 @@ NAME_UUID = btle.UUID("00002a00-0000-1000-8000-00805f9b34fb")
 # Class definitions
 class NotificationDelegate(btle.DefaultDelegate):
     """Callback for Notifications received."""
-    def __init__(self, logger, handle):
+    def __init__(self, logger, handle, message_queue):
         """Constructor.
 
         Args:
             logger: Logger for BLE host and device.
             handle: Handle of Characteristic to receive notifications from.
+            message_queue: Message queue for incoming data.
         """
         btle.DefaultDelegate.__init__(self)
         self.logger = logger
         self.handle = handle
+        self.message_queue = message_queue
 
     def handleNotification(self, handle, data):
         """Handler for notifications.
@@ -40,6 +42,7 @@ class NotificationDelegate(btle.DefaultDelegate):
         """
         if handle == self.handle:
             self.logger.debug(f"Notification: {handle}, {data}")
+            self.message_queue.put(data)
 
 
 class BLEDevice:
@@ -101,17 +104,18 @@ class BLEDevice:
                 self.logger.debug(f"{c}")
                 self.logger.debug(f"{c.propertiesToString()}")
 
-    def set_notifications(self, uuid, value):
+    def set_notifications(self, uuid, value, message_queue):
         """Enable or disable notifications for a Characteristic.
 
         Args:
             uuid: UUID of Characteristic.
             value: Boolean value to enable or disable notifications.
+            message_queue: Message queue for incoming data.
         """
         if uuid in self.characteristics.keys():
             c = self.characteristics[uuid]
             if "notify" in c.propertiesToString().lower():
-                self.peripheral.setDelegate(NotificationDelegate(self.logger, c.getHandle()))
+                self.peripheral.setDelegate(NotificationDelegate(self.logger, c.getHandle(), message_queue))
 
                 handle = c.getHandle() + 1
                 if value:

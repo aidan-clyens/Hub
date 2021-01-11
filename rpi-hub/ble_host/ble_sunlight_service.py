@@ -8,8 +8,8 @@ class SunlightService:
     def __init__(self, device):
         self.device = device
 
-    def set_notifications(self, value):
-        self.device.set_notifications(SUNLIGHT_VALUE_UUID, True)
+    def set_notifications(self, value, message_queue):
+        self.device.set_notifications(SUNLIGHT_VALUE_UUID, True, message_queue)
 
     def read_sunlight_value(self):
         data = self.device.read_value(SUNLIGHT_VALUE_UUID)
