@@ -30,7 +30,8 @@ def ble_function(ble, device_address):
             if not device.is_connected():
                 connected = False
             else:
-                time.sleep(heartbeat)
+                if device.wait_for_notifications(heartbeat):
+                    continue
         else:
             devices = ble.scan(5.0)
             connected = ble.connect(device_address)
