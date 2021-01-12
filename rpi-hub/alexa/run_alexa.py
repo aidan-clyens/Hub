@@ -10,13 +10,7 @@ from pixels import Pixels, pixels
 from alexa_led_pattern import AlexaLedPattern
 
 
-source_path = os.path.join(package_dir, "avs-sdk/build/SampleApp/src")
-config_path = os.path.join(package_dir, "avs-sdk/build/Integration/AlexaClientSDKConfig.json")
-models_path = os.path.join(package_dir, "avd-sdk/third-party/alexa-rpi/models")
-
-sample_app = os.path.join(source_path, "SampleApp")
-
-debug_flag = ""
+sample_script = os.path.join(package_dir, "run_alexa.sh")
 
 
 class Alexa:
@@ -34,7 +28,7 @@ class Alexa:
         self.pixels.pattern = AlexaLedPattern(show=self.pixels.show)
 
         self.env = os.environ.copy()
-        self.env["PO_ALSA_PLUGHW"] = "1"
+        self.env["PA_ALSA_PLUGHW"] = "1"
 
         self.started = False
 
@@ -42,7 +36,7 @@ class Alexa:
         self.pixels.off()
 
     def start(self):
-        cmd = f"{sample_app} {config_path} {models_path} {debug_flag}"
+        cmd = f"bash {sample_script}"
         self.logger.debug(cmd)
         process = subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE, env=self.env)
 
