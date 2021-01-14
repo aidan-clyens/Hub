@@ -16,16 +16,12 @@ import queue
 from bluepy import btle
 
 from mqtt_client import MQTTClient
-from ble_host import BLEHost
+from ble_host import BLEHost, HeartRateService
 from alexa import Alexa
 
 
-# Constants
-SUNLIGHT_VALUE_UUID = btle.UUID("f0002bad-0451-4000-b000-000000000000")
-
-
 # Global variables
-sunlight_value_queue = queue.Queue()
+heartrate_queue = queue.Queue()
 
 
 # Class definitions
@@ -47,8 +43,8 @@ def mqtt_function(client, topic):
 
     # Main loop
     while True:
-        value = sunlight_value_queue.get(block=True)
-        client.publish(topic, int.from_bytes(value, byteorder="little"))
+        heartrate = heartrate_queue.get()
+        client.publish(topic, heartrate)
 
 
 def ble_function(ble, device_address):
@@ -74,7 +70,8 @@ def ble_function(ble, device_address):
 
         elif ble_state == BLEState.FOUND_DEVICE:
             device = ble.connected_device
-            device.set_notifications(SUNLIGHT_VALUE_UUID, True, sunlight_value_queue)
+            heartrate_service = HeartRateService(device)
+            heartrate_service.set_heartrate_notifications(True, heartrate_queue)
 
             ble_state = BLEState.CONNECTED
 
