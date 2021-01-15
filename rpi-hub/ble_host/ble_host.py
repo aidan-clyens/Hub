@@ -52,7 +52,7 @@ class BLEHost:
     def __init__(self):
         """Constructor."""
         # Configure logger
-        self.logger = logging.getLogger(__file__)
+        self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -90,7 +90,7 @@ class BLEHost:
             if d.addr == target_address:
                 if d.connectable:
                     try:
-                        self.connected_device = BLEDevice(self.logger, d)
+                        self.connected_device = BLEDevice(d)
                         self.logger.info(f"Successfully connected to {self.connected_device.name} ({target_address})")
                         return True
                     except Exception as e:

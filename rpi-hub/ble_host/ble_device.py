@@ -10,6 +10,7 @@
                 continue
 """
 #Imports
+import logging
 from bluepy import btle
 
 
@@ -24,7 +25,7 @@ class NotificationDelegate(btle.DefaultDelegate):
         """Constructor.
 
         Args:
-            logger: Logger for BLE host and device.
+            logger: Logger for BLE device.
             handle: Handle of Characteristic to receive notifications from.
             message_queue: Message queue for incoming data.
         """
@@ -48,16 +49,22 @@ class NotificationDelegate(btle.DefaultDelegate):
 class BLEDevice:
     """BLE Device."""
 
-    def __init__(self, logger, device):
+    def __init__(self, device):
         """Constructor.
 
         Args:
-            logger: Logger for BLE host.
             device: BLE device object from bluepy.btle package.
         """
-        self.logger = logger
         self.address = device.addr
         self.peripheral = btle.Peripheral(device)
+
+        # Configure logger
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        stream_handler = logging.StreamHandler()
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        stream_handler.setFormatter(formatter)
+        self.logger.addHandler(stream_handler)
 
         self.setup_services()
         self.name = self.get_name()
