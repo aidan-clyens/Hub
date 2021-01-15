@@ -43,7 +43,8 @@ def mqtt_function(client, topic):
 
     # Main loop
     while True:
-        heartrate = heartrate_queue.get()
+        value = heartrate_queue.get()
+        heartrate = int.from_bytes(value["data"], byteorder="little")
         client.publish(topic, heartrate)
 
 

@@ -21,17 +21,19 @@ NAME_UUID = btle.UUID("00002a00-0000-1000-8000-00805f9b34fb")
 # Class definitions
 class NotificationDelegate(btle.DefaultDelegate):
     """Callback for Notifications received."""
-    def __init__(self, logger, handle, message_queue):
+    def __init__(self, logger, handle, tag, message_queue):
         """Constructor.
 
         Args:
             logger: Logger for BLE device.
             handle: Handle of Characteristic to receive notifications from.
+            tag: Name of data.
             message_queue: Message queue for incoming data.
         """
         btle.DefaultDelegate.__init__(self)
         self.logger = logger
         self.handle = handle
+        self.tag = tag
         self.message_queue = message_queue
 
     def handleNotification(self, handle, data):
@@ -42,8 +44,8 @@ class NotificationDelegate(btle.DefaultDelegate):
             data: Data received from Characteristic notification is received from.
         """
         if handle == self.handle:
-            self.logger.debug(f"Notification: {handle}, {data}")
-            self.message_queue.put(data)
+            self.logger.debug(f"Notification: {handle}, {self.tag}, {data}")
+            self.message_queue.put({"tag": self.tag, "data": data})
 
 
 class BLEDevice:
@@ -111,7 +113,7 @@ class BLEDevice:
                 self.logger.debug(f"{c}")
                 self.logger.debug(f"{c.propertiesToString()}")
 
-    def set_notifications(self, uuid, value, message_queue):
+    def set_notifications(self, uuid, value, tag, message_queue):
         """Enable or disable notifications for a Characteristic.
 
         Args:
@@ -122,7 +124,7 @@ class BLEDevice:
         if uuid in self.characteristics.keys():
             c = self.characteristics[uuid]
             if "notify" in c.propertiesToString().lower():
-                self.peripheral.setDelegate(NotificationDelegate(self.logger, c.getHandle(), message_queue))
+                self.peripheral.setDelegate(NotificationDelegate(self.logger, c.getHandle(), tag, message_queue))
 
                 handle = c.getHandle() + 1
                 if value:

@@ -51,7 +51,7 @@ class HeartRateService:
         else:
             self.logger.info("Disable Heart Rate Value notifications")
 
-        self.device.set_notifications(HEARTRATE_VALUE_UUID, value, data_queue)
+        self.device.set_notifications(HEARTRATE_VALUE_UUID, value, "heartrate", data_queue)
 
     def set_spO2_notifications(self, value, data_queue):
         """Enable or disable notifications for SpO2 value.
@@ -65,7 +65,7 @@ class HeartRateService:
         else:
             self.logger.info("Disable SpO2 Value notifications")
 
-        self.device.set_notifications(SPO2_VALUE_UUID, value, data_queue)
+        self.device.set_notifications(SPO2_VALUE_UUID, value, "spo2", data_queue)
 
     def set_status_notifications(self, value, data_queue):
         """Enable or disable notifications for sensor status value.
@@ -79,7 +79,7 @@ class HeartRateService:
         else:
             self.logger.info("Disable Status notifications")
 
-        self.device.set_notifications(STATUS_VALUE_UUID, value, data_queue)
+        self.device.set_notifications(STATUS_VALUE_UUID, value, "ppg_status", data_queue)
 
     def set_confidence_notifications(self, value, data_queue):
         """Enable or disable notifications for confidence of reading value.
@@ -92,7 +92,7 @@ class HeartRateService:
             self.logger.info("Enable Reading Confidence notifications")
         else:
             self.logger.info("Disable Reading Confidence notifications")
-        self.device.set_notifications(CONFIDENCE_VALUE_UUID, value, data_queue)
+        self.device.set_notifications(CONFIDENCE_VALUE_UUID, value, "ppg_confidence", data_queue)
 
     def read_heartrate(self):
         """Read heart rate value."""
