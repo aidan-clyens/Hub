@@ -112,8 +112,16 @@ class HeartRateService:
         """Read sensor status."""
         value_bytes = self.device.read_value(STATUS_VALUE_UUID)
         value = int.from_bytes(value_bytes, byteorder="little")
-        self.logger.info(f"Read Status: {value}")
-        return value
+        state = "undetected"
+        if value == 1:
+            state = "off_skin"
+        elif value == 2:
+            state = "on_subject"
+        elif value == 3:
+            state = "on_skin"
+
+        self.logger.info(f"Read Status: {state}")
+        return state
 
     def read_confidence(self):
         """Read confidence of sensor reading."""
