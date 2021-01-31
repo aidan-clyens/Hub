@@ -43,9 +43,8 @@ def mqtt_function(client, topic):
 
     # Main loop
     while True:
-        value = heartrate_queue.get()
-        heartrate = int.from_bytes(value["data"], byteorder="little")
-        client.publish(topic, heartrate)
+        data = heartrate_queue.get()
+        client.publish(topic, data)
 
 
 def ble_function(ble, device_address):
@@ -72,16 +71,32 @@ def ble_function(ble, device_address):
         elif ble_state == BLEState.FOUND_DEVICE:
             device = ble.connected_device
             heartrate_service = HeartRateService(device)
-            heartrate_service.set_heartrate_notifications(True, heartrate_queue)
+
+            # TODO: Publish wristband connection packet to stream
 
             ble_state = BLEState.CONNECTED
 
         elif ble_state == BLEState.CONNECTED:
+            # Read heart rate data periodically
             try:
-                if device.wait_for_notifications(heartbeat):
-                    continue
+                data = {}
+
+                data["wristband_id"] = "Test" # TODO
+                data["rssi"] = 0 # TODO
+                data["heartrate"] = heartrate_service.read_heartrate()
+                data["heartrate_confidence"] = 0 # TODO
+                data["spO2"] = heartrate_service.read_spO2()
+                data["spO2_confidence"] = 0 # TODO
+                data["contact_status"] = heartrate_service.read_status()
+
+                heartrate_queue.put(data)
             except btle.BTLEDisconnectError:
                 ble_state = BLEState.SCANNING
+
+            # TODO: Wait for emergency alert notifications
+
+            time.sleep(5)
+
 
 
 def alexa_function(alexa):
@@ -116,6 +131,8 @@ def main():
     # Configure MQTT client
     client = MQTTClient(client_id, endpoint, path_to_root, path_to_key, path_to_cert)
     client.connect()
+
+    # TODO: Publish hub connection packet to stream
 
     # Configure BLE host and connect to peripheral device
     ble = BLEHost()

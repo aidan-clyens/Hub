@@ -84,11 +84,14 @@ class MQTTClient:
         self.connect()
         if self.online:
             message = {
-                "id": self.client_id,
+                "hub_id": self.client_id,
                 "sequence": self.sequence_num,
-                "data": data,
                 "timestamp": datetime.datetime.now()
             }
+
+            # Add data to packet
+            for [key, value] in data.items():
+                message[key] = value
 
             try:
                 self.client.publish(topic, json.dumps(message, cls=DateTimeEncoder), 1)
