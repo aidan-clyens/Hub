@@ -55,7 +55,7 @@ def ble_function(ble, device_address):
         device_address: Target BLE device MAC address
     """
 
-    heartbeat = 30
+    polling_interval = 5
     device = None
 
     ble_state = BLEState.SCANNING
@@ -79,6 +79,11 @@ def ble_function(ble, device_address):
         elif ble_state == BLEState.CONNECTED:
             # Read heart rate data periodically
             try:
+                # TODO: Wait for emergency alert notifications
+                if device.wait_for_notifications(polling_interval):
+                    # TODO: Handle notifications
+                    pass
+
                 data = {}
 
                 data["wristband_id"] = "Test" # TODO
@@ -93,9 +98,6 @@ def ble_function(ble, device_address):
             except btle.BTLEDisconnectError:
                 ble_state = BLEState.SCANNING
 
-            # TODO: Wait for emergency alert notifications
-
-            time.sleep(5)
 
 
 
