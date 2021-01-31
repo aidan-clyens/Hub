@@ -21,7 +21,7 @@ from alexa import Alexa
 
 
 # Global variables
-heartrate_queue = queue.Queue()
+message_queue = queue.Queue()
 
 
 # Class definitions
@@ -32,22 +32,28 @@ class BLEState(enum.Enum):
     CONNECTED = 3
 
 
+class MqttMessage:
+    def __init__(self, topic, data):
+        self.topic = topic
+        self.data = data
+
+
 # Global functions
-def mqtt_function(client, topic):
+def mqtt_function(client):
     """MQTT main thread.
 
     Args:
         client: Connected MQTT client
-        topic: Topic to publish messages to
     """
 
     # Main loop
     while True:
-        data = heartrate_queue.get()
-        client.publish(topic, data)
+        message = message_queue.get()
+        print(message)
+        client.publish(message.topic, message.data)
 
 
-def ble_function(ble, device_address):
+def ble_function(ble, device_address, topics):
     """BLE main thread.
 
     Args:
@@ -73,6 +79,9 @@ def ble_function(ble, device_address):
             heartrate_service = HeartRateService(device)
 
             # TODO: Publish wristband connection packet to stream
+            wristband_id = "Test"
+            message = MqttMessage(topics["wristband_connect"], {"wristband_id": wristband_id})
+            message_queue.put(message)
 
             ble_state = BLEState.CONNECTED
 
@@ -94,7 +103,8 @@ def ble_function(ble, device_address):
                 data["spO2_confidence"] = 0 # TODO
                 data["contact_status"] = heartrate_service.read_status()
 
-                heartrate_queue.put(data)
+                message = MqttMessage(topics["data"], data)
+                message_queue.put(message)
             except btle.BTLEDisconnectError:
                 ble_state = BLEState.SCANNING
 
@@ -126,10 +136,13 @@ def main():
     path_to_cert = config.path_to_cert
     path_to_key = config.path_to_key
     path_to_root = config.path_to_root
-    hub_connect_topic = config.hub_connect_topic
-    wristband_connect_topic = config.wristband_connect_topic
-    data_topic = config.data_topic
-    alert_topic = config.alert_topic
+
+    topics = {
+        "hub_connect": config.hub_connect_topic,    
+        "wristband_connect": config.wristband_connect_topic,    
+        "data": config.data_topic,    
+        "alert": config.alert_topic
+    }
 
     device_address = config.device_address
 
@@ -138,9 +151,7 @@ def main():
     client.connect()
 
     # Alert AWS of new Hub connection
-    client.publish(hub_connect_topic, {})
-
-    # TODO: Publish hub connection packet to stream
+    message_queue.put(MqttMessage(topics["hub_connect"], {}))
 
     # Configure BLE host and connect to peripheral device
     ble = BLEHost()
@@ -149,8 +160,8 @@ def main():
     alexa = Alexa()
 
     # Create and start threads
-    mqtt_thread = threading.Thread(target=mqtt_function, args=(client, data_topic), daemon=True)
-    ble_thread = threading.Thread(target=ble_function, args=(ble, device_address), daemon=True)
+    mqtt_thread = threading.Thread(target=mqtt_function, args=(client, ), daemon=True)
+    ble_thread = threading.Thread(target=ble_function, args=(ble, device_address, topics), daemon=True)
     alexa_thread = threading.Thread(target=alexa_function, args=(alexa, ), daemon=True)
 
     mqtt_thread.start()
