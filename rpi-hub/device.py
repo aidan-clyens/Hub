@@ -49,7 +49,6 @@ def mqtt_function(client):
     # Main loop
     while True:
         message = message_queue.get()
-        print(message)
         client.publish(message.topic, message.data)
 
 
@@ -78,9 +77,9 @@ def ble_function(ble, device_address, topics):
             device = ble.connected_device
             heartrate_service = HeartRateService(device)
 
-            # TODO: Publish wristband connection packet to stream
-            wristband_id = "Test"
-            message = MqttMessage(topics["wristband_connect"], {"wristband_id": wristband_id})
+            # Alert AWS when new wristband is connected
+            wristband_id = "Test" # TODO: Get device ID
+            message = MqttMessage(topics["wristband_connect"], {"wristband_id": wristband_id, "mac_address": device_address})
             message_queue.put(message)
 
             ble_state = BLEState.CONNECTED
