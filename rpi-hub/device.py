@@ -124,13 +124,19 @@ def main():
     path_to_cert = config.path_to_cert
     path_to_key = config.path_to_key
     path_to_root = config.path_to_root
-    topic = config.topic
+    hub_connect_topic = config.hub_connect_topic
+    wristband_connect_topic = config.wristband_connect_topic
+    data_topic = config.data_topic
+    alert_topic = config.alert_topic
 
     device_address = config.device_address
 
     # Configure MQTT client
     client = MQTTClient(client_id, endpoint, path_to_root, path_to_key, path_to_cert)
     client.connect()
+
+    # Alert AWS of new Hub connection
+    client.publish(hub_connect_topic, {})
 
     # TODO: Publish hub connection packet to stream
 
@@ -141,7 +147,7 @@ def main():
     alexa = Alexa()
 
     # Create and start threads
-    mqtt_thread = threading.Thread(target=mqtt_function, args=(client, topic), daemon=True)
+    mqtt_thread = threading.Thread(target=mqtt_function, args=(client, data_topic), daemon=True)
     ble_thread = threading.Thread(target=ble_function, args=(ble, device_address), daemon=True)
     alexa_thread = threading.Thread(target=alexa_function, args=(alexa, ), daemon=True)
 
