@@ -97,10 +97,10 @@ def ble_function(ble, device_address, topics):
                 data["wristband_id"] = "Test" # TODO
                 data["rssi"] = 0 # TODO
                 data["heartrate"] = heartrate_service.read_heartrate()
-                data["heartrate_confidence"] = 0 # TODO
+                data["heartrate_confidence"] = heartrate_service.read_heartrate_confidence();
                 data["spO2"] = heartrate_service.read_spO2()
-                data["spO2_confidence"] = 0 # TODO
-                data["contact_status"] = heartrate_service.read_status()
+                data["spO2_confidence"] = heartrate_service.read_spO2_confidence();
+                data["contact_status"] = heartrate_service.read_scd_state()
 
                 message = MqttMessage(topics["data"], data)
                 message_queue.put(message)

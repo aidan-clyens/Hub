@@ -15,9 +15,10 @@ from bluepy import btle
 
 # Constants
 HEARTRATE_VALUE_UUID = btle.UUID("f000a001-0451-4000-b000-000000000000")
-SPO2_VALUE_UUID = btle.UUID("f000a002-0451-4000-b000-000000000000")
-STATUS_VALUE_UUID = btle.UUID("f000a003-0451-4000-b000-000000000000")
-CONFIDENCE_VALUE_UUID = btle.UUID("f000a004-0451-4000-b000-000000000000")
+HEARTRATE_CONFIDENCE_UUID = btle.UUID("f000a002-0451-4000-b000-000000000000")
+SPO2_VALUE_UUID = btle.UUID("f000a003-0451-4000-b000-000000000000")
+SPO2_CONFIDENCE_UUID = btle.UUID("f000a004-0451-4000-b000-000000000000")
+SCD_STATE_VALUE_UUID = btle.UUID("f000a005-0451-4000-b000-000000000000")
 
 
 # Class Definitions
@@ -53,6 +54,20 @@ class HeartRateService:
 
         self.device.set_notifications(HEARTRATE_VALUE_UUID, value, "heartrate", data_queue)
 
+    def set_heartrate_confidence_notifications(self, value, data_queue):
+        """Enable or disable notifications for heart rate confidence.
+
+        Args:
+            value: Boolean indicating enable or disable
+            data_queue: A queue to store data received
+        """
+        if value:
+            self.logger.info("Enable Heart Rate Confidence notifications")
+        else:
+            self.logger.info("Disable Heart Rate Confidence notifications")
+
+        self.device.set_notifications(HEARTRATE_CONFIDENCE_UUID, value, "heartrate_confidence", data_queue)
+
     def set_spO2_notifications(self, value, data_queue):
         """Enable or disable notifications for SpO2 value.
 
@@ -67,38 +82,46 @@ class HeartRateService:
 
         self.device.set_notifications(SPO2_VALUE_UUID, value, "spo2", data_queue)
 
-    def set_status_notifications(self, value, data_queue):
-        """Enable or disable notifications for sensor status value.
+    def set_spO2_confidence_notifications(self, value, data_queue):
+        """Enable or disable notifications for SpO2 confidence.
 
         Args:
             value: Boolean indicating enable or disable
             data_queue: A queue to store data received
         """
         if value:
-            self.logger.info("Enable Status notifications")
+            self.logger.info("Enable SpO2 Confidence notifications")
         else:
-            self.logger.info("Disable Status notifications")
+            self.logger.info("Disable SpO2 Confidence notifications")
 
-        self.device.set_notifications(STATUS_VALUE_UUID, value, "ppg_status", data_queue)
+        self.device.set_notifications(SPO2_CONFIDENCE_UUID, value, "spo2_confidence", data_queue)
 
-    def set_confidence_notifications(self, value, data_queue):
-        """Enable or disable notifications for confidence of reading value.
+    def set_scd_state_notifications(self, value, data_queue):
+        """Enable or disable notifications for sensor SCD state value.
 
         Args:
             value: Boolean indicating enable or disable
             data_queue: A queue to store data received
         """
         if value:
-            self.logger.info("Enable Reading Confidence notifications")
+            self.logger.info("Enable SCD State notifications")
         else:
-            self.logger.info("Disable Reading Confidence notifications")
-        self.device.set_notifications(CONFIDENCE_VALUE_UUID, value, "ppg_confidence", data_queue)
+            self.logger.info("Disable SCD State notifications")
+
+        self.device.set_notifications(SCD_STATE_VALUE_UUID, value, "scd_state", data_queue)
 
     def read_heartrate(self):
         """Read heart rate value."""
         value_bytes = self.device.read_value(HEARTRATE_VALUE_UUID)
         value = int.from_bytes(value_bytes, byteorder="little")
         self.logger.info(f"Read Heart Rate Value: {value}")
+        return value
+
+    def read_heartrate_confidence(self):
+        """Read heart rate confidence."""
+        value_bytes = self.device.read_value(HEARTRATE_CONFIDENCE_UUID)
+        value = int.from_bytes(value_bytes, byteorder="little")
+        self.logger.info(f"Read Heart Rate Confidence: {value}")
         return value
 
     def read_spO2(self):
@@ -108,9 +131,16 @@ class HeartRateService:
         self.logger.info(f"Read SpO2 Value: {value}")
         return value
 
-    def read_status(self):
-        """Read sensor status."""
-        value_bytes = self.device.read_value(STATUS_VALUE_UUID)
+    def read_spO2_confidence(self):
+        """Read SpO2 confidence."""
+        value_bytes = self.device.read_value(SPO2_CONFIDENCE_UUID)
+        value = int.from_bytes(value_bytes, byteorder="little")
+        self.logger.info(f"Read SpO2 Confidence: {value}")
+        return value
+
+    def read_scd_state(self):
+        """Read sensor SCD state."""
+        value_bytes = self.device.read_value(SCD_STATE_VALUE_UUID)
         value = int.from_bytes(value_bytes, byteorder="little")
         state = "undetected"
         if value == 1:
@@ -120,12 +150,5 @@ class HeartRateService:
         elif value == 3:
             state = "on_skin"
 
-        self.logger.info(f"Read Status: {state}")
+        self.logger.info(f"Read SCD State: {state}")
         return state
-
-    def read_confidence(self):
-        """Read confidence of sensor reading."""
-        value_bytes = self.device.read_value(CONFIDENCE_VALUE_UUID)
-        value = int.from_bytes(value_bytes, byteorder="little")
-        self.logger.info(f"Read Reading Confidence: {value}")
-        return value
