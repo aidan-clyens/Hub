@@ -62,6 +62,8 @@ class BLEHost:
         # Configure scanner
         self.scanner = btle.Scanner().withDelegate(ScanDelegate(self.logger))
 
+        self.cached_devices = {}
+
     def scan(self, timeout=2):
         """Scan for BLE devices.
 
@@ -90,7 +92,12 @@ class BLEHost:
             if d.addr == target_address:
                 if d.connectable:
                     try:
-                        self.connected_device = BLEDevice(d)
+                        if d.addr not in self.cached_devices.keys():
+                            self.cached_devices[d.addr] = BLEDevice(d)
+                        else:
+                            self.cached_devices[d.addr].connect()
+
+                        self.connected_device = self.cached_devices[d.addr]
                         self.logger.info(f"Successfully connected to {self.connected_device.name} ({target_address})")
                         return True
                     except Exception as e:

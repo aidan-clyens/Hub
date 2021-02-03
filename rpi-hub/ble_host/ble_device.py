@@ -73,7 +73,18 @@ class BLEDevice:
 
     def __del__(self):
         """Destructor."""
+        self.disconnect()
+
+    def connect(self):
+        """Connect to device."""
         if self.peripheral:
+            self.logger.info(f"Connecting to: {self.name} ({self.address})")
+            self.peripheral.connect(self.address)
+
+    def disconnect(self):
+        """Disconnect from device."""
+        if self.peripheral:
+            self.logger.warning(f"Disconnected from: {self.name} ({self.address})")
             self.peripheral.disconnect()
 
     def get_name(self):
@@ -145,7 +156,7 @@ class BLEDevice:
             state = self.peripheral.getState()
         except Exception as e:
             self.logger.warning(f"Error getting state: {e}")
-            state = "conn"
+            state = "disconn"
 
         self.logger.debug(f"{self.name}: State = {state}")
         return state
