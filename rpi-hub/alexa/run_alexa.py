@@ -13,7 +13,7 @@ from alexa_led_pattern import AlexaLedPattern
 sample_script = os.path.join(package_dir, "run_alexa.sh")
 
 
-class Alexa:
+class VoiceEngine:
     def __init__(self):
         # Configure logger
         self.logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class Alexa:
 
 
 def main():
-    alexa = Alexa()
+    alexa = VoiceEngine()
     alexa.start()
 
 

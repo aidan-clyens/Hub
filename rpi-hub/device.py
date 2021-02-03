@@ -17,7 +17,7 @@ from bluepy import btle
 
 from mqtt_client import MQTTClient
 from ble_host import BLEHost, HeartRateService, EmergencyAlertService
-from alexa import Alexa
+from alexa import VoiceEngine
 
 
 # Global variables
@@ -156,14 +156,14 @@ def ble_function(ble, device_address, topics):
             ble_state = BLEState.SCANNING
 
 
-def alexa_function(alexa):
-    """Alexa main thread.
+def voice_engine_function(voice_engine):
+    """Voice Engine main thread.
 
     Args:
-        alexa: Alexa application wrapper
+        voice_engine: VoiceEngine application wrapper
     """
 
-    alexa.start()
+    voice_engine.start()
 
 
 def main():
@@ -201,22 +201,22 @@ def main():
     # Configure BLE host and connect to peripheral device
     ble = BLEHost()
 
-    # Configure Alexa
-    alexa = Alexa()
+    # Configure Voice Engine
+    voice_engine = VoiceEngine()
 
     # Create and start threads
     mqtt_thread = threading.Thread(target=mqtt_function, args=(client, ), daemon=True)
     ble_thread = threading.Thread(target=ble_function, args=(ble, device_address, topics), daemon=True)
-    alexa_thread = threading.Thread(target=alexa_function, args=(alexa, ), daemon=True)
+    voice_thread = threading.Thread(target=voice_engine_function, args=(voice_engine, ), daemon=True)
 
     mqtt_thread.start()
     ble_thread.start()
-    alexa_thread.start()
+    voice_thread.start()
 
     # Wait until threads exit
     mqtt_thread.join()
     ble_thread.join()
-    alexa_thread.join()
+    voice_thread.join()
 
 
 if __name__ == '__main__':
