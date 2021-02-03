@@ -22,6 +22,7 @@ from alexa import VoiceEngine
 
 # Global variables
 message_queue = queue.Queue()
+voice_engine_queue = queue.Queue()
 
 alert_data_queue = queue.Queue()
 
@@ -146,6 +147,9 @@ def ble_function(ble, device_address, topics):
                     message = MqttMessage(topics["alert"], data)
                     message_queue.put(message)
 
+                    text = "Emergency alert detected. Requesting help immediately."
+                    voice_engine_queue.put(text)
+
                     # Set alert active to 0 after being received
                     hub_state = HubState.POLLING
                 except:
@@ -153,6 +157,8 @@ def ble_function(ble, device_address, topics):
         
         elif ble_state == BLEState.DISCONNECTED:
             # TODO: Alert AWS of wristband disconnect
+            text = "Wristband disconnected. Please power back on."
+            voice_engine_queue.put(text)
             ble_state = BLEState.SCANNING
 
 
@@ -163,7 +169,10 @@ def voice_engine_function(voice_engine):
         voice_engine: VoiceEngine application wrapper
     """
 
-    voice_engine.start()
+    #voice_engine.start()
+    while True:
+        text = voice_engine_queue.get()
+        voice_engine.speak(text)
 
 
 def main():

@@ -15,6 +15,10 @@ sudo reboot
 ```
 pip3 install spidev gpiozero
 ```
+7. Install mplayer for Text-to-Speech
+```
+sudo apt-get install mplayer
+```
 
 ### Alexa Voice Service
 1. Sign into an Amazon Developer account

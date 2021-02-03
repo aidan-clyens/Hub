@@ -11,6 +11,7 @@ from alexa_led_pattern import AlexaLedPattern
 
 
 sample_script = os.path.join(package_dir, "run_alexa.sh")
+tts_script = os.path.join(package_dir, "speech.sh")
 
 
 class VoiceEngine:
@@ -77,6 +78,13 @@ class VoiceEngine:
     def speaking(self):
         self.logger.info("Speaking")
         self.pixels.speak()
+
+    def speak(self, text):
+        cmd = f"bash {tts_script} {text}"
+        self.logger.debug(cmd)
+        self.pixels.speak()
+        subprocess.run(shlex.split(cmd), shell=False, stdout=subprocess.PIPE, env=self.env)
+        self.pixels.off()
 
 
 def main():
