@@ -16,12 +16,14 @@ import queue
 from bluepy import btle
 
 from mqtt_client import MQTTClient
-from ble_host import BLEHost, HeartRateService
+from ble_host import BLEHost, HeartRateService, EmergencyAlertService
 from alexa import Alexa
 
 
 # Global variables
 message_queue = queue.Queue()
+
+alert_data_queue = queue.Queue()
 
 
 # Class definitions
@@ -30,6 +32,13 @@ class BLEState(enum.Enum):
     SCANNING = 1
     FOUND_DEVICE = 2
     CONNECTED = 3
+    DISCONNECTED = 4
+
+
+class HubState(enum.Enum):
+    """Hub activity states."""
+    POLLING = 1
+    ALERT_ACTIVE = 2
 
 
 class MqttMessage:
@@ -63,7 +72,11 @@ def ble_function(ble, device_address, topics):
     polling_interval = 5
     device = None
 
+    heartrate_service = None
+    emergency_alert_service = None
+
     ble_state = BLEState.SCANNING
+    hub_state = HubState.POLLING
 
     # Main loop
     while True:
@@ -75,7 +88,14 @@ def ble_function(ble, device_address, topics):
 
         elif ble_state == BLEState.FOUND_DEVICE:
             device = ble.connected_device
-            heartrate_service = HeartRateService(device)
+
+            if heartrate_service is None:
+                heartrate_service = HeartRateService(device)
+
+            if emergency_alert_service is None:
+                emergency_alert_service = EmergencyAlertService(device)
+
+            emergency_alert_service.set_alert_active_notifications(True, alert_data_queue)
 
             # Alert AWS when new wristband is connected
             wristband_id = "Test" # TODO: Get device ID
@@ -85,29 +105,55 @@ def ble_function(ble, device_address, topics):
             ble_state = BLEState.CONNECTED
 
         elif ble_state == BLEState.CONNECTED:
-            # Read heart rate data periodically
-            try:
-                # TODO: Wait for emergency alert notifications
-                if device.wait_for_notifications(polling_interval):
-                    # TODO: Handle notifications
-                    pass
+            if hub_state == HubState.POLLING:
+                # Read heart rate data periodically
+                try:
+                    # Wait for emergency alert notifications
+                    if device.wait_for_notifications(polling_interval):
+                        print(f"Received notification: {alert_data_queue.get()}")
+                        hub_state = HubState.ALERT_ACTIVE
 
-                data = {}
+                    data = {}
 
-                data["wristband_id"] = "Test" # TODO
-                data["rssi"] = 0 # TODO
-                data["heartrate"] = heartrate_service.read_heartrate()
-                data["heartrate_confidence"] = heartrate_service.read_heartrate_confidence();
-                data["spO2"] = heartrate_service.read_spO2()
-                data["spO2_confidence"] = heartrate_service.read_spO2_confidence();
-                data["contact_status"] = heartrate_service.read_scd_state()
+                    data["wristband_id"] = device.name
+                    data["rssi"] = 0 # TODO
+                    data["heartrate"] = heartrate_service.read_heartrate()
+                    data["heartrate_confidence"] = heartrate_service.read_heartrate_confidence();
+                    data["spO2"] = heartrate_service.read_spO2()
+                    data["spO2_confidence"] = heartrate_service.read_spO2_confidence();
+                    data["contact_status"] = heartrate_service.read_scd_state()
 
-                message = MqttMessage(topics["data"], data)
-                message_queue.put(message)
-            except btle.BTLEDisconnectError:
-                ble_state = BLEState.SCANNING
+                    message = MqttMessage(topics["data"], data)
+                    message_queue.put(message)
+                except:
+                    ble_state = BLEState.DISCONNECTED
 
+            elif hub_state == HubState.ALERT_ACTIVE:
+                # Deal with alert
+                try:
+                    data = {}
 
+                    data["wristband_id"] = device.name
+                    data["rssi"] = 0 # TODO
+                    data["heartrate"] = heartrate_service.read_heartrate()
+                    data["heartrate_confidence"] = heartrate_service.read_heartrate_confidence();
+                    data["spO2"] = heartrate_service.read_spO2()
+                    data["spO2_confidence"] = heartrate_service.read_spO2_confidence();
+                    data["contact_status"] = heartrate_service.read_scd_state()
+                    data["alert_active"] = emergency_alert_service.read_alert_active()
+                    data["alert_type"] = emergency_alert_service.read_alert_type()
+
+                    message = MqttMessage(topics["alert"], data)
+                    message_queue.put(message)
+
+                    # Set alert active to 0 after being received
+                    hub_state = HubState.POLLING
+                except:
+                    ble_state = BLEState.DISCONNECTED
+        
+        elif ble_state == BLEState.DISCONNECTED:
+            # TODO: Alert AWS of wristband disconnect
+            ble_state = BLEState.SCANNING
 
 
 def alexa_function(alexa):
