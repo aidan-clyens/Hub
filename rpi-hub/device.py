@@ -113,6 +113,7 @@ def ble_function(ble, device_address, topics):
                     if device.wait_for_notifications(polling_interval):
                         print(f"Received notification: {alert_data_queue.get()}")
                         hub_state = HubState.ALERT_ACTIVE
+                        continue
 
                     data = {}
 
