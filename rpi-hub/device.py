@@ -127,7 +127,8 @@ def ble_function(ble, device_address, topics):
 
                     message = MqttMessage(topics["data"], data)
                     message_queue.put(message)
-                except:
+                except Exception as e:
+                    print(e)
                     ble_state = BLEState.DISCONNECTED
 
             elif hub_state == HubState.ALERT_ACTIVE:
@@ -152,8 +153,10 @@ def ble_function(ble, device_address, topics):
                     voice_engine_queue.put(text)
 
                     # Set alert active to 0 after being received
+                    emergency_alert_service.write_alert_active(0)
                     hub_state = HubState.POLLING
-                except:
+                except Exception as e:
+                    print(e)
                     ble_state = BLEState.DISCONNECTED
         
         elif ble_state == BLEState.DISCONNECTED:

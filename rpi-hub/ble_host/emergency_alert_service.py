@@ -73,8 +73,14 @@ class EmergencyAlertService:
         return value
 
     def read_alert_active(self):
-        """Read alert active_indicator."""
+        """Read alert active indicator."""
         value_bytes = self.device.read_value(ALERT_ACTIVE_UUID)
         value = int.from_bytes(value_bytes, byteorder="little")
         self.logger.info(f"Read Alert Active: {value}")
         return value
+
+    def write_alert_active(self, value):
+        """Write alert active indicator"""
+        self.logger.info(f"Setting Alert Active to: {value}")
+        value_bytes = bytes([value])
+        self.device.write_value(ALERT_ACTIVE_UUID, value_bytes)
