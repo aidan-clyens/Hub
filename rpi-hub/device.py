@@ -105,6 +105,9 @@ def ble_function(ble, device_address, topics):
             
             text = f"Wristband, {wristband_id}, connected."
             voice_engine_queue.put(text)
+            
+            # Wait for wristband to initialize after connecting
+            time.sleep(2)
 
             ble_state = BLEState.CONNECTED
 
