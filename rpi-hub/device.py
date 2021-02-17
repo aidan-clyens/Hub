@@ -133,6 +133,12 @@ def ble_function(ble, device_address, topics):
 
                     message = MqttMessage(topics["data"], data)
                     message_queue.put(message)
+
+                    # Check for missed emergency alert notifications
+                    if emergency_alert_service.read_alert_active():
+                        hub_state = HubState.ALERT_ACTIVE
+                        continue
+
                 except Exception as e:
                     print(e)
                     ble_state = BLEState.DISCONNECTED
@@ -152,6 +158,14 @@ def ble_function(ble, device_address, topics):
                     data["alert_active"] = emergency_alert_service.read_alert_active()
                     data["alert_type"] = emergency_alert_service.read_alert_type()
 
+                    if data["alert_type"] == "manual request" \
+                        or data["alert_type"] == "fall event" \
+                        or data["alert_type"] == "low heartrate" \
+                        or data["alert_type"] == "high heartrate":
+                        data["severity"] = "high"
+                    else:
+                        data["severity"] = "low"
+                    
                     message = MqttMessage(topics["alert"], data)
                     message_queue.put(message)
 
@@ -178,6 +192,7 @@ def ble_function(ble, device_address, topics):
             data["contact_status"] = 0
             data["alert_active"] = 1
             data["alert_type"] = "wristband disconnected"
+            data["severity"] = "low"
 
             message = MqttMessage(topics["alert"], data)
             message_queue.put(message)
