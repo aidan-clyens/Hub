@@ -99,7 +99,7 @@ def ble_function(ble, device_address, topics):
             emergency_alert_service.set_alert_active_notifications(True, alert_data_queue)
 
             # Alert AWS when new wristband is connected
-            wristband_id = "Test" # TODO: Get device ID
+            wristband_id = device.name
             message = MqttMessage(topics["wristband_connect"], {"wristband_id": wristband_id, "mac_address": device_address})
             message_queue.put(message)
 
