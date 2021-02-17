@@ -69,8 +69,21 @@ class EmergencyAlertService:
         """Read alert type."""
         value_bytes = self.device.read_value(ALERT_TYPE_UUID)
         value = int.from_bytes(value_bytes, byteorder="little")
-        self.logger.info(f"Read Alert Type: {value}")
-        return value
+
+        value_str = ""        
+        if value == 0:
+            value_str = "manual request"
+        elif value == 1:
+            value_str = "fall event"
+        elif value == 2:
+            value_str = "no contact"
+        elif value == 3:
+            value_str = "low heartrate"
+        elif value == 4:
+            value_str = "high heartrate"
+
+        self.logger.info(f"Read Alert Type: {value_str}")
+        return value_str
 
     def read_alert_active(self):
         """Read alert active indicator."""

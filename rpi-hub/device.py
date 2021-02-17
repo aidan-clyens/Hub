@@ -155,7 +155,7 @@ def ble_function(ble, device_address, topics):
                     message = MqttMessage(topics["alert"], data)
                     message_queue.put(message)
 
-                    text = "Manual emergency alert triggered. Requesting help immediately."
+                    text = f"Emergency alert detected due to {data['alert_type']}. Requesting help immediately."
                     voice_engine_queue.put(text)
 
                     # Set alert active to 0 after being received
@@ -166,7 +166,22 @@ def ble_function(ble, device_address, topics):
                     ble_state = BLEState.DISCONNECTED
         
         elif ble_state == BLEState.DISCONNECTED:
-            # TODO: Alert AWS of wristband disconnect
+            # Alert AWS of wristband disconnect
+            data = {}
+
+            data["wristband_id"] = device.name
+            data["rssi"] = 0 # TODO
+            data["heartrate"] = 0
+            data["heartrate_confidence"] = 0
+            data["spO2"] = 0
+            data["spO2_confidence"] = 0
+            data["contact_status"] = 0
+            data["alert_active"] = 1
+            data["alert_type"] = "wristband disconnected"
+
+            message = MqttMessage(topics["alert"], data)
+            message_queue.put(message)
+
             text = f"Wristband, {device.name}, disconnected. Please power back on."
             voice_engine_queue.put(text)
             ble_state = BLEState.SCANNING
