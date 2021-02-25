@@ -26,17 +26,19 @@ class MQTTClient:
     """MQTT client to connect to AWS IoT server."""
     sequence_num = 0
 
-    def __init__(self, client_id, endpoint, root_path, key_path, cert_path):
+    def __init__(self, client_id, hub_id, endpoint, root_path, key_path, cert_path):
         """Constructor.
 
         Args:
             client_id: Name this of AWS IoT client.
+            hub_id: MAC address to use as hub ID
             endpoint: Endpoint for AWS IoT server.
             root_path: Path to root file.
             key_path: Path to key file.
             cert_path: Path to cert file.
         """
         self.client_id = client_id
+        self.hub_id = hub_id
 
         # Configure logger
         self.logger = logging.getLogger("AWSIoTPythonSDK.core")
@@ -84,7 +86,7 @@ class MQTTClient:
         self.connect()
         if self.online:
             message = {
-                "hub_id": self.client_id,
+                "hub_id": self.hub_id,
                 "sequence": self.sequence_num,
                 "timestamp": datetime.datetime.now()
             }

@@ -99,11 +99,11 @@ def ble_function(ble, device_address, topics):
             emergency_alert_service.set_alert_active_notifications(True, alert_data_queue)
 
             # Alert AWS when new wristband is connected
-            wristband_id = device.name
-            message = MqttMessage(topics["wristband_connect"], {"wristband_id": wristband_id, "mac_address": device_address})
+            wristband_id = device_address
+            message = MqttMessage(topics["wristband_connect"], {"wristband_id": wristband_id, "wristband_name": device.name})
             message_queue.put(message)
             
-            text = f"Wristband, {wristband_id}, connected."
+            text = f"Wristband, {device.name}, connected."
             voice_engine_queue.put(text)
             
             # Wait for wristband to initialize after connecting
@@ -123,7 +123,8 @@ def ble_function(ble, device_address, topics):
 
                     data = {}
 
-                    data["wristband_id"] = device.name
+                    data["wristband_id"] = device_address
+                    data["wristband_name"] = device.name
                     data["rssi"] = 0 # TODO
                     data["heartrate"] = heartrate_service.read_heartrate()
                     data["heartrate_confidence"] = heartrate_service.read_heartrate_confidence();
@@ -148,7 +149,8 @@ def ble_function(ble, device_address, topics):
                 try:
                     data = {}
 
-                    data["wristband_id"] = device.name
+                    data["wristband_id"] = device_address
+                    data["wristband_name"] = device.name
                     data["rssi"] = 0 # TODO
                     data["heartrate"] = heartrate_service.read_heartrate()
                     data["heartrate_confidence"] = heartrate_service.read_heartrate_confidence();
@@ -183,7 +185,8 @@ def ble_function(ble, device_address, topics):
             # Alert AWS of wristband disconnect
             data = {}
 
-            data["wristband_id"] = device.name
+            data["wristband_id"] = device_address
+            data["wristband_name"] = device.name
             data["rssi"] = 0 # TODO
             data["heartrate"] = 0
             data["heartrate_confidence"] = 0
@@ -227,6 +230,7 @@ def main():
 
     endpoint = config.endpoint
     client_id = config.client_id
+    hub_id = config.hub_mac_address
     path_to_cert = config.path_to_cert
     path_to_key = config.path_to_key
     path_to_root = config.path_to_root
@@ -241,11 +245,11 @@ def main():
     device_address = config.device_address
 
     # Configure MQTT client
-    client = MQTTClient(client_id, endpoint, path_to_root, path_to_key, path_to_cert)
+    client = MQTTClient(client_id, hub_id, endpoint, path_to_root, path_to_key, path_to_cert)
     client.connect()
 
     # Alert AWS of new Hub connection
-    message_queue.put(MqttMessage(topics["hub_connect"], {}))
+    message_queue.put(MqttMessage(topics["hub_connect"], {"hub_name": client_id}))
 
     # Configure BLE host and connect to peripheral device
     ble = BLEHost()
