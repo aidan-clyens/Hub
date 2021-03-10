@@ -25,6 +25,9 @@ message_queue = queue.Queue()
 voice_engine_queue = queue.Queue()
 
 alert_data_queue = queue.Queue()
+heartrate_data_queue = queue.Queue()
+heartrate_confidence_data_queue = queue.Queue()
+spO2_data_queue = queue.Queue()
 
 
 # Class definitions
@@ -39,7 +42,7 @@ class BLEState(enum.Enum):
 class HubState(enum.Enum):
     """Hub activity states."""
     POLLING = 1
-    ALERT_ACTIVE = 2
+    READ_DATA = 2
 
 
 class MqttMessage:
@@ -96,6 +99,11 @@ def ble_function(ble, device_address, topics):
             if emergency_alert_service is None:
                 emergency_alert_service = EmergencyAlertService(device)
 
+            # Enable notifications
+            heartrate_service.set_heartrate_notifications(True, heartrate_data_queue) 
+            heartrate_service.set_heartrate_confidence_notifications(True, heartrate_confidence_data_queue) 
+            heartrate_service.set_spO2_notifications(True, spO2_data_queue) 
+
             emergency_alert_service.set_alert_active_notifications(True, alert_data_queue)
 
             # Alert AWS when new wristband is connected
@@ -117,35 +125,21 @@ def ble_function(ble, device_address, topics):
                 try:
                     # Wait for emergency alert notifications
                     if device.wait_for_notifications(polling_interval):
-                        print(f"Received notification: {alert_data_queue.get()}")
-                        hub_state = HubState.ALERT_ACTIVE
+                        print(f"Received notification:")
+                        hub_state = HubState.READ_DATA
                         continue
-
-                    data = {}
-
-                    data["wristband_id"] = device_address
-                    data["wristband_name"] = device.name
-                    data["rssi"] = 0 # TODO
-                    data["heartrate"] = heartrate_service.read_heartrate()
-                    data["heartrate_confidence"] = heartrate_service.read_heartrate_confidence();
-                    data["spO2"] = heartrate_service.read_spO2()
-                    data["spO2_confidence"] = heartrate_service.read_spO2_confidence();
-                    data["contact_status"] = heartrate_service.read_scd_state()
-
-                    message = MqttMessage(topics["data"], data)
-                    message_queue.put(message)
 
                     # Check for missed emergency alert notifications
                     if emergency_alert_service.read_alert_active():
-                        hub_state = HubState.ALERT_ACTIVE
+                        hub_state = HubState.READ_DATA
                         continue
 
                 except Exception as e:
                     print(e)
                     ble_state = BLEState.DISCONNECTED
 
-            elif hub_state == HubState.ALERT_ACTIVE:
-                # Deal with alert
+            elif hub_state == HubState.READ_DATA:
+                # Read data
                 try:
                     data = {}
 
@@ -158,25 +152,34 @@ def ble_function(ble, device_address, topics):
                     data["spO2_confidence"] = heartrate_service.read_spO2_confidence();
                     data["contact_status"] = heartrate_service.read_scd_state()
                     data["alert_active"] = emergency_alert_service.read_alert_active()
-                    data["alert_type"] = emergency_alert_service.read_alert_type()
 
-                    if data["alert_type"] == "manual request" \
-                        or data["alert_type"] == "fall event" \
-                        or data["alert_type"] == "low heartrate" \
-                        or data["alert_type"] == "high heartrate":
-                        data["severity"] = "high"
+                    # Trigger alert
+                    if data["alert_active"] == 1:
+                        data["alert_type"] = emergency_alert_service.read_alert_type()
+                        if data["alert_type"] == "manual request" \
+                            or data["alert_type"] == "fall event" \
+                            or data["alert_type"] == "low heartrate" \
+                            or data["alert_type"] == "high heartrate":
+                            data["severity"] = "high"
+                        else:
+                            data["severity"] = "low"
+                        
+                        message = MqttMessage(topics["alert"], data)
+                        message_queue.put(message)
+
+                        text = f"Emergency alert detected due to {data['alert_type']}. Requesting help immediately."
+                        voice_engine_queue.put(text)
+
+                        # Set alert active to 0 after being received
+                        emergency_alert_service.write_alert_active(0)
+
+                    # Update data
                     else:
-                        data["severity"] = "low"
+                        message = MqttMessage(topics["data"], data)
+                        message_queue.put(message)
                     
-                    message = MqttMessage(topics["alert"], data)
-                    message_queue.put(message)
-
-                    text = f"Emergency alert detected due to {data['alert_type']}. Requesting help immediately."
-                    voice_engine_queue.put(text)
-
-                    # Set alert active to 0 after being received
-                    emergency_alert_service.write_alert_active(0)
                     hub_state = HubState.POLLING
+                        
                 except Exception as e:
                     print(e)
                     ble_state = BLEState.DISCONNECTED
