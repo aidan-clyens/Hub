@@ -93,8 +93,10 @@ class BLEHost:
                 if d.connectable:
                     try:
                         if d.addr not in self.cached_devices.keys():
+                            self.logger.debug(f"Caching device: {d.addr}")
                             self.cached_devices[d.addr] = BLEDevice(d)
                         else:
+                            self.logger.debug(f"Found cached device: {d.addr}")
                             self.cached_devices[d.addr].connect()
 
                         self.connected_device = self.cached_devices[d.addr]

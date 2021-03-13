@@ -16,18 +16,25 @@ import queue
 from bluepy import btle
 
 from mqtt_client import MQTTClient
-from ble_host import BLEHost, HeartRateService, EmergencyAlertService
+from ble_host import BLEHost, ConfigService, HeartRateService, EmergencyAlertService
 from alexa import VoiceEngine
+
+
+# Constants
+LOW_HEARTRATE = 60
+HIGH_HEARTRATE = 110
 
 
 # Global variables
 message_queue = queue.Queue()
 voice_engine_queue = queue.Queue()
 
+rssi_data_queue = queue.Queue()
 alert_data_queue = queue.Queue()
 heartrate_data_queue = queue.Queue()
 heartrate_confidence_data_queue = queue.Queue()
 spO2_data_queue = queue.Queue()
+scd_data_queue = queue.Queue()
 
 
 # Class definitions
@@ -76,6 +83,9 @@ def ble_function(ble, device_address, topics):
     polling_interval = 5
     device = None
 
+    current_contact_status = ""
+
+    config_service = None
     heartrate_service = None
     emergency_alert_service = None
 
@@ -93,6 +103,9 @@ def ble_function(ble, device_address, topics):
         elif ble_state == BLEState.FOUND_DEVICE:
             device = ble.connected_device
 
+            if config_service is None:
+                config_service = ConfigService(device)
+
             if heartrate_service is None:
                 heartrate_service = HeartRateService(device)
 
@@ -100,9 +113,12 @@ def ble_function(ble, device_address, topics):
                 emergency_alert_service = EmergencyAlertService(device)
 
             # Enable notifications
+            config_service.set_rssi_notifications(True, rssi_data_queue)
+
             heartrate_service.set_heartrate_notifications(True, heartrate_data_queue) 
             heartrate_service.set_heartrate_confidence_notifications(True, heartrate_confidence_data_queue) 
             heartrate_service.set_spO2_notifications(True, spO2_data_queue) 
+            heartrate_service.set_scd_state_notifications(True, scd_data_queue) 
 
             emergency_alert_service.set_alert_active_notifications(True, alert_data_queue)
 
@@ -145,7 +161,7 @@ def ble_function(ble, device_address, topics):
 
                     data["wristband_id"] = device_address
                     data["wristband_name"] = device.name
-                    data["rssi"] = 0 # TODO
+                    data["rssi"] = config_service.read_rssi()
                     data["heartrate"] = heartrate_service.read_heartrate()
                     data["heartrate_confidence"] = heartrate_service.read_heartrate_confidence();
                     data["spO2"] = heartrate_service.read_spO2()
@@ -157,9 +173,7 @@ def ble_function(ble, device_address, topics):
                     if data["alert_active"] == 1:
                         data["alert_type"] = emergency_alert_service.read_alert_type()
                         if data["alert_type"] == "manual request" \
-                            or data["alert_type"] == "fall event" \
-                            or data["alert_type"] == "low heartrate" \
-                            or data["alert_type"] == "high heartrate":
+                            or data["alert_type"] == "fall event":
                             data["severity"] = "high"
                         else:
                             data["severity"] = "low"
@@ -173,11 +187,36 @@ def ble_function(ble, device_address, topics):
                         # Set alert active to 0 after being received
                         emergency_alert_service.write_alert_active(0)
 
+                    # Trigger warning for lost contact
+                    elif data["contact_status"] == "undetected" and not current_contact_status == "undetected":
+                        data["alert_active"] = 1
+                        data["alert_type"] = "no_contact"
+                        data["severity"] = "low"
+                        print("No contact with user")
+
                     # Update data
-                    else:
+                    elif data["contact_status"] == "on_skin" and data["heartrate_confidence"] > 0:
                         message = MqttMessage(topics["data"], data)
                         message_queue.put(message)
-                    
+
+                        # Check for high or low heartrate
+                        if data["heartrate"] < LOW_HEARTRATE:
+                            print("Low heartrate")
+                            data["alert_active"] = 1
+                            data["alert_type"] = "low heartrate"
+
+                            message = MqttMessage(topics["alert"], data)
+                            message_queue.put(message)
+                        elif data["heartrate"] > HIGH_HEARTRATE:
+                            print("High heartrate")
+                            data["alert_active"] = 1
+                            data["alert_type"] = "high heartrate"
+
+                            message = MqttMessage(topics["alert"], data)
+                            message_queue.put(message)
+
+
+                    current_contact_status = data["contact_status"]
                     hub_state = HubState.POLLING
                         
                 except Exception as e:
@@ -190,7 +229,7 @@ def ble_function(ble, device_address, topics):
 
             data["wristband_id"] = device_address
             data["wristband_name"] = device.name
-            data["rssi"] = 0 # TODO
+            data["rssi"] = 0
             data["heartrate"] = 0
             data["heartrate_confidence"] = 0
             data["spO2"] = 0
