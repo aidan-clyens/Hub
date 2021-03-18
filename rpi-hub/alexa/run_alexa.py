@@ -1,8 +1,12 @@
 import os
+import signal
 import subprocess
 import shlex
 import sys
 import logging
+import threading
+import queue
+import time
 
 package_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(1, os.path.join(package_dir, "4mics_hat"))
@@ -37,14 +41,47 @@ class VoiceEngine:
         self.pixels.off()
 
     def start(self):
+        self.logger.info("Starting AVS")
         cmd = f"bash {sample_script}"
         self.logger.debug(cmd)
-        process = subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE, env=self.env)
-
+        self.process = subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE, env=self.env)
         self.started = True
 
-        while True:
-            output = process.stdout.readline()
+        self.process_queue = queue.Queue()
+    
+        self.output_thread = threading.Thread(target=self.read_output, args=(self.process.stdout, self.process_queue, self.started))
+        self.output_thread.daemon = True
+        self.output_thread.start()
+
+    def is_running(self):
+        exit_code = self.process.poll()
+        if exit_code is not None:
+            self.started = False
+
+        return self.started
+
+    def stop(self):
+        if not self.started:
+            return
+
+        self.logger.info("Stopping AVS")
+
+        cmd = "ps -a"
+        ps_process = subprocess.Popen(shlex.split(cmd), shell=False, stdout=subprocess.PIPE)
+        out, err = ps_process.communicate()
+
+        for line in out.splitlines():
+            if "SampleApp" in str(line):
+                pid = int(line.split(None, 1)[0])
+                os.kill(pid, signal.SIGKILL)
+
+        while self.is_running():
+            pass
+
+    def read_output(self, pipe, process_queue, running):
+        while running:
+            output = pipe.readline()
+
             if output:
                 output = output.decode().replace("\n", "").strip().lower()
                 if "to authorize" in output:
@@ -59,9 +96,7 @@ class VoiceEngine:
                 elif "speaking" in output:
                     self.speaking()
 
-            exit_code = process.poll()
-            if output == "" and exit_code is not None:
-                break
+        self.logger.debug("AVS output thread stopped")
 
     def idle(self):
         self.logger.info("Idle")
@@ -88,8 +123,18 @@ class VoiceEngine:
 
 
 def main():
+    prev_time = time.time() * 1000
+
     alexa = VoiceEngine()
     alexa.start()
+    while alexa.is_running():
+        curr_time = time.time() * 1000
+        if curr_time - prev_time > 10000:
+            alexa.stop()
+            alexa.speak("test")
+            alexa.start()
+
+            prev_time = curr_time
 
 
 if __name__ == "__main__":

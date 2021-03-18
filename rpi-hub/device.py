@@ -254,10 +254,15 @@ def voice_engine_function(voice_engine):
         voice_engine: VoiceEngine application wrapper
     """
 
-    #voice_engine.start()
-    while True:
-        text = voice_engine_queue.get()
-        voice_engine.speak(text)
+    voice_engine.start()
+    while voice_engine.is_running():
+        try:
+            text = voice_engine_queue.get()
+            voice_engine.stop()
+            voice_engine.speak(text)
+            voice_engine.start()
+        except:
+            pass
 
 
 def main():
