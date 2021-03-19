@@ -224,6 +224,8 @@ def ble_function(ble, device_address, topics):
                     ble_state = BLEState.DISCONNECTED
         
         elif ble_state == BLEState.DISCONNECTED:
+            device.disconnect()
+
             # Alert AWS of wristband disconnect
             data = {}
 
