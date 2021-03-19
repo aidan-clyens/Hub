@@ -9,6 +9,7 @@
 
 # Imports
 import logging
+import os
 from bluepy import btle
 
 from .ble_device import BLEDevice
@@ -103,8 +104,8 @@ class BLEHost:
                         self.logger.info(f"Successfully connected to {self.connected_device.name} ({target_address})")
                         return True
                     except Exception as e:
-                        self.logger.warning(str(e))
-                        return False
+                        self.logger.error(f"Error connecting to device: {str(e)}")
+                        os._exit(1)
                 else:
                     self.logger.info(f"Device {target_address} is not connectable")
                     return False
