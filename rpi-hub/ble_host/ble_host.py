@@ -75,7 +75,13 @@ class BLEHost:
             List of BLE device objects scanned.
         """
         self.logger.info("Scanning...")
-        self.devices = self.scanner.scan(timeout)
+        self.devices = []
+        try:
+            self.devices = self.scanner.scan(timeout)
+        except Exception as e:
+            self.logger.error(f"Error scanning for devices: {e}")
+            os._exit(1)
+
         return self.devices
 
     def connect(self, target_address):
