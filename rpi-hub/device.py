@@ -127,7 +127,7 @@ def ble_function(ble, device_address, topics):
             message = MqttMessage(topics["wristband_connect"], {"wristband_id": wristband_id, "wristband_name": device.name})
             message_queue.put(message)
             
-            text = f"Wristband, {device.name}, connected."
+            text = f"{device.name}, connected."
             voice_engine_queue.put(text)
             
             # Wait for wristband to initialize after connecting
@@ -181,7 +181,7 @@ def ble_function(ble, device_address, topics):
                         message = MqttMessage(topics["alert"], data)
                         message_queue.put(message)
 
-                        text = f"Emergency alert detected due to {data['alert_type']}. Requesting help immediately."
+                        text = f"{data['alert_type']} detected. Requesting help immediately."
                         voice_engine_queue.put(text)
 
                         # Set alert active to 0 after being received
