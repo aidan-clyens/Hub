@@ -52,7 +52,7 @@ class NotificationDelegate(btle.DefaultDelegate):
 class BLEDevice:
     """BLE Device."""
 
-    def __init__(self, device):
+    def __init__(self, device, log_level):
         """Constructor.
 
         Args:
@@ -63,7 +63,7 @@ class BLEDevice:
 
         # Configure logger
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(log_level)
         stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         stream_handler.setFormatter(formatter)

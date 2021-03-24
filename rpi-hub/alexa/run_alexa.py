@@ -19,10 +19,10 @@ tts_script = os.path.join(package_dir, "speech.sh")
 
 
 class VoiceEngine:
-    def __init__(self):
+    def __init__(self, log_level):
         # Configure logger
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(log_level)
         streamHandler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         streamHandler.setFormatter(formatter)
@@ -131,7 +131,7 @@ def main():
         curr_time = time.time() * 1000
         if curr_time - prev_time > 10000:
             alexa.stop()
-            alexa.speak("test")
+            alexa.speak("Wristband, Aidan Wristband, connected")
             alexa.start()
 
             prev_time = curr_time

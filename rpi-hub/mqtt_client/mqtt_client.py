@@ -26,7 +26,7 @@ class MQTTClient:
     """MQTT client to connect to AWS IoT server."""
     sequence_num = 0
 
-    def __init__(self, client_id, hub_id, endpoint, root_path, key_path, cert_path):
+    def __init__(self, client_id, hub_id, endpoint, root_path, key_path, cert_path, log_level):
         """Constructor.
 
         Args:
@@ -42,7 +42,7 @@ class MQTTClient:
 
         # Configure logger
         self.logger = logging.getLogger("AWSIoTPythonSDK.core")
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(log_level)
         stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         stream_handler.setFormatter(formatter)

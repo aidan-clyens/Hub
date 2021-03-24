@@ -50,11 +50,12 @@ class BLEHost:
     """BLE host and scanner"""
     connected_device = None
 
-    def __init__(self):
+    def __init__(self, log_level):
         """Constructor."""
         # Configure logger
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.log_level = log_level
+        self.logger.setLevel(log_level)
         stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         stream_handler.setFormatter(formatter)
@@ -101,7 +102,7 @@ class BLEHost:
                     try:
                         if d.addr not in self.cached_devices.keys():
                             self.logger.debug(f"Caching device: {d.addr}")
-                            self.cached_devices[d.addr] = BLEDevice(d)
+                            self.cached_devices[d.addr] = BLEDevice(d, self.log_level)
                         else:
                             self.logger.debug(f"Found cached device: {d.addr}")
                             self.cached_devices[d.addr].connect()

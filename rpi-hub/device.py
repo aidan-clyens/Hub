@@ -13,6 +13,8 @@ import os
 import threading
 import enum
 import queue
+import logging
+import argparse
 from bluepy import btle
 
 from mqtt_client import MQTTClient
@@ -269,6 +271,23 @@ def voice_engine_function(voice_engine):
 
 def main():
     """Main."""
+    parser = argparse.ArgumentParser(description="Hub Application Software")
+    parser.add_argument("--log", choices=["notset", "debug", "info", "warning", "error", "critical"], default="info", help="Set logging level")
+    args = parser.parse_args()
+
+    # Set logging level
+    if args.log == "notset":
+        log_level = logging.NOTSET
+    elif args.log == "debug":
+        log_level = logging.DEBUG
+    elif args.log == "info":
+        log_level = logging.INFO
+    elif args.log == "warning":
+        log_level = logging.WARNING
+    elif args.log == "error":
+        log_level = logging.ERROR
+    elif args.log == "critical":
+        log_level = logging.CRITICAL
 
     # Check for AWS IoT certificates
     if not os.path.exists(config.path_to_cert) or \
@@ -294,17 +313,17 @@ def main():
     device_address = config.device_address
 
     # Configure MQTT client
-    client = MQTTClient(client_id, hub_id, endpoint, path_to_root, path_to_key, path_to_cert)
+    client = MQTTClient(client_id, hub_id, endpoint, path_to_root, path_to_key, path_to_cert, log_level)
     client.connect()
 
     # Alert AWS of new Hub connection
     message_queue.put(MqttMessage(topics["hub_connect"], {"hub_name": client_id}))
 
     # Configure BLE host and connect to peripheral device
-    ble = BLEHost()
+    ble = BLEHost(log_level)
 
     # Configure Voice Engine
-    voice_engine = VoiceEngine()
+    voice_engine = VoiceEngine(log_level)
 
     # Create and start threads
     mqtt_thread = threading.Thread(target=mqtt_function, args=(client, ), daemon=True)
