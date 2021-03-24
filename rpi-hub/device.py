@@ -74,7 +74,7 @@ def mqtt_function(client):
         client.publish(message.topic, message.data)
 
 
-def ble_function(ble, device_address, topics):
+def ble_function(ble, device_address, topics, tts_data):
     """BLE main thread.
 
     Args:
@@ -143,7 +143,6 @@ def ble_function(ble, device_address, topics):
                 try:
                     # Wait for emergency alert notifications
                     if device.wait_for_notifications(polling_interval):
-                        print(f"Received notification:")
                         hub_state = HubState.READ_DATA
                         continue
 
@@ -153,7 +152,6 @@ def ble_function(ble, device_address, topics):
                         continue
 
                 except Exception as e:
-                    print(e)
                     ble_state = BLEState.DISCONNECTED
 
             elif hub_state == HubState.READ_DATA:
@@ -194,7 +192,13 @@ def ble_function(ble, device_address, topics):
                         data["alert_active"] = 1
                         data["alert_type"] = "no_contact"
                         data["severity"] = "low"
-                        print("No contact with user")
+
+                        if tts_data:
+                            text = f"Your most recent heart rate is {data['heartrate']} BPM"
+                            if data["spO2"] > 0:
+                                text += f" and oxygen level is {data['spO2']} %"
+                                    
+                            voice_engine_queue.put(text)
 
                     # Update data
                     elif data["contact_status"] == "on_skin" and data["heartrate_confidence"] > 0:
@@ -207,12 +211,18 @@ def ble_function(ble, device_address, topics):
                             data["alert_active"] = 1
                             data["alert_type"] = "low heartrate"
 
+                            text = f"Your heart rate is below the average resting heart rate at {data['heartrate']} BPM. Notifying staff."
+                            voice_engine_queue.put(text)
+
                             message = MqttMessage(topics["alert"], data)
                             message_queue.put(message)
                         elif data["heartrate"] > HIGH_HEARTRATE:
                             print("High heartrate")
                             data["alert_active"] = 1
                             data["alert_type"] = "high heartrate"
+
+                            text = f"Your heart rate is above the average resting heart rate at {data['heartrate']} BPM. Notifying staff."
+                            voice_engine_queue.put(text)
 
                             message = MqttMessage(topics["alert"], data)
                             message_queue.put(message)
@@ -251,7 +261,7 @@ def ble_function(ble, device_address, topics):
             ble_state = BLEState.SCANNING
 
 
-def voice_engine_function(voice_engine):
+def voice_engine_function(voice_engine, enable_tts):
     """Voice Engine main thread.
 
     Args:
@@ -262,9 +272,10 @@ def voice_engine_function(voice_engine):
     while voice_engine.is_running():
         try:
             text = voice_engine_queue.get()
-            voice_engine.stop()
-            voice_engine.speak(text)
-            voice_engine.start()
+            if enable_tts:
+                voice_engine.stop()
+                voice_engine.speak(text)
+                voice_engine.start()
         except:
             pass
 
@@ -273,6 +284,8 @@ def main():
     """Main."""
     parser = argparse.ArgumentParser(description="Hub Application Software")
     parser.add_argument("--log", choices=["notset", "debug", "info", "warning", "error", "critical"], default="info", help="Set logging level")
+    parser.add_argument("--tts", default=False, action="store_true", help="Enable TTS")
+    parser.add_argument("--tts_data", default=False, action="store_true", help="Read heart rate and SpO2 readings using TTS")
     args = parser.parse_args()
 
     # Set logging level
@@ -327,8 +340,8 @@ def main():
 
     # Create and start threads
     mqtt_thread = threading.Thread(target=mqtt_function, args=(client, ), daemon=True)
-    ble_thread = threading.Thread(target=ble_function, args=(ble, device_address, topics), daemon=True)
-    voice_thread = threading.Thread(target=voice_engine_function, args=(voice_engine, ), daemon=True)
+    ble_thread = threading.Thread(target=ble_function, args=(ble, device_address, topics, args.tts_data), daemon=True)
+    voice_thread = threading.Thread(target=voice_engine_function, args=(voice_engine, args.tts), daemon=True)
 
     mqtt_thread.start()
     ble_thread.start()
