@@ -20,7 +20,7 @@ RSSI_UUID = btle.UUID("f000c001-0451-4000-b000-000000000000")
 # Class Definitions
 class ConfigService:
     """API for the BLE Config Service"""
-    def __init__(self, device):
+    def __init__(self, device, log_level):
         """Constructor.
 
         Args:
@@ -30,7 +30,7 @@ class ConfigService:
 
         # Configure logger
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(log_level)
         stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         stream_handler.setFormatter(formatter)

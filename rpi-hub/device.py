@@ -74,7 +74,7 @@ def mqtt_function(client):
         client.publish(message.topic, message.data)
 
 
-def ble_function(ble, device_address, topics, tts_data):
+def ble_function(ble, device_address, topics, log_level, tts_data):
     """BLE main thread.
 
     Args:
@@ -106,13 +106,13 @@ def ble_function(ble, device_address, topics, tts_data):
             device = ble.connected_device
 
             if config_service is None:
-                config_service = ConfigService(device)
+                config_service = ConfigService(device, log_level)
 
             if heartrate_service is None:
-                heartrate_service = HeartRateService(device)
+                heartrate_service = HeartRateService(device, log_level)
 
             if emergency_alert_service is None:
-                emergency_alert_service = EmergencyAlertService(device)
+                emergency_alert_service = EmergencyAlertService(device, log_level)
 
             # Enable notifications
             config_service.set_rssi_notifications(True, rssi_data_queue)
@@ -340,7 +340,7 @@ def main():
 
     # Create and start threads
     mqtt_thread = threading.Thread(target=mqtt_function, args=(client, ), daemon=True)
-    ble_thread = threading.Thread(target=ble_function, args=(ble, device_address, topics, args.tts_data), daemon=True)
+    ble_thread = threading.Thread(target=ble_function, args=(ble, device_address, topics, log_level, args.tts_data), daemon=True)
     voice_thread = threading.Thread(target=voice_engine_function, args=(voice_engine, args.tts), daemon=True)
 
     mqtt_thread.start()

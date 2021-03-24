@@ -21,7 +21,7 @@ ALERT_ACTIVE_UUID = btle.UUID("f000b002-0451-4000-b000-000000000000")
 # Class Definitions
 class EmergencyAlertService:
     """API for the BLE Emergency Alert Service"""
-    def __init__(self, device):
+    def __init__(self, device, log_level):
         """Constructor.
 
         Args:

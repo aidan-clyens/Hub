@@ -24,7 +24,7 @@ SCD_STATE_VALUE_UUID = btle.UUID("f000a005-0451-4000-b000-000000000000")
 # Class Definitions
 class HeartRateService:
     """API for the BLE Heart Rate Service"""
-    def __init__(self, device):
+    def __init__(self, device, log_level):
         """Constructor.
 
         Args:
@@ -34,7 +34,7 @@ class HeartRateService:
 
         # Configure logger
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(log_level)
         stream_handler = logging.StreamHandler()
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         stream_handler.setFormatter(formatter)
