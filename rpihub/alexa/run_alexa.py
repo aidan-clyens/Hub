@@ -13,6 +13,8 @@ sys.path.insert(1, os.path.join(package_dir, "4mics_hat"))
 from pixels import Pixels, pixels
 from alexa_led_pattern import AlexaLedPattern
 
+from rpihub.logger import get_logger
+
 
 sample_script = os.path.join(package_dir, "run_alexa.sh")
 tts_script = os.path.join(package_dir, "speech.sh")
@@ -21,12 +23,7 @@ tts_script = os.path.join(package_dir, "speech.sh")
 class VoiceEngine:
     def __init__(self, log_level):
         # Configure logger
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(log_level)
-        streamHandler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        streamHandler.setFormatter(formatter)
-        self.logger.addHandler(streamHandler)
+        self.logger = get_logger(__name__, log_level)
 
         # Configure LEDs
         self.pixels = pixels

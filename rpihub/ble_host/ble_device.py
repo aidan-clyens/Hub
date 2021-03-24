@@ -14,6 +14,7 @@ import logging
 import os
 from bluepy import btle
 
+from rpihub.logger import get_logger
 
 # Constants
 NAME_UUID = btle.UUID("00002a00-0000-1000-8000-00805f9b34fb")
@@ -62,12 +63,7 @@ class BLEDevice:
         self.peripheral = btle.Peripheral(device)
 
         # Configure logger
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(log_level)
-        stream_handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        stream_handler.setFormatter(formatter)
-        self.logger.addHandler(stream_handler)
+        self.logger = get_logger(__name__, log_level)
 
         self.setup_services()
         self.name = self.get_name()

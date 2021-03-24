@@ -7,6 +7,6 @@
 
 2. Create a cron job to start scripts by editing the crontab: `crontab -e`. Add the following line.
 ```
-@reboot sleep 10 && screen -d -m /home/pi/Programs/FYDP/rpi-hub/start.sh
+@reboot sleep 10 && screen -d -m /home/pi/Programs/FYDP/start.sh
 ```
 - Replace the project directory as necessary.

@@ -14,6 +14,8 @@ from bluepy import btle
 
 from .ble_device import BLEDevice
 
+from rpihub.logger import get_logger
+
 
 # Class definitions
 class ScanDelegate(btle.DefaultDelegate):
@@ -53,13 +55,8 @@ class BLEHost:
     def __init__(self, log_level):
         """Constructor."""
         # Configure logger
-        self.logger = logging.getLogger(__name__)
         self.log_level = log_level
-        self.logger.setLevel(log_level)
-        stream_handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        stream_handler.setFormatter(formatter)
-        self.logger.addHandler(stream_handler)
+        self.logger = get_logger(__name__, log_level)
 
         # Configure scanner
         self.scanner = btle.Scanner().withDelegate(ScanDelegate(self.logger))

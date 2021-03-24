@@ -1,8 +1,12 @@
 endpoint = "airgahux2exxu-ats.iot.us-east-2.amazonaws.com"
 client_id = "Hub"
+hub_mac_address = "07:1e:97:41:4e:ff"
 path_to_cert = "certificates/da33435664-certificate.pem.crt"
 path_to_key = "certificates/da33435664-private.pem.key"
 path_to_root = "certificates/AmazonRootCA1.pem"
-topic = "HubTopic"
+hub_connect_topic = "HubTopics/HubConnectTopic"
+wristband_connect_topic = "HubTopics/WristbandConnectTopic"
+data_topic = "HubTopics/DataTopic"
+alert_topic = "HubTopics/AlertTopic"
 device_address = "0C:61:CF:A3:09:3E"
 

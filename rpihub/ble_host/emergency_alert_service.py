@@ -12,6 +12,7 @@
 import logging
 from bluepy import btle
 
+from rpihub.logger import get_logger
 
 # Constants
 ALERT_TYPE_UUID = btle.UUID("f000b001-0451-4000-b000-000000000000")
@@ -30,12 +31,7 @@ class EmergencyAlertService:
         self.device = device
 
         # Configure logger
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-        stream_handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        stream_handler.setFormatter(formatter)
-        self.logger.addHandler(stream_handler)
+        self.logger = get_logger(__name__, log_level)
 
     def set_alert_type_notifications(self, value, data_queue):
         """Enable or disable notifications for alert type.

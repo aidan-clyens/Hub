@@ -12,6 +12,8 @@ import json
 import logging
 import AWSIoTPythonSDK.MQTTLib as mqtt
 
+from rpihub.logger import get_logger
+
 
 # Class definitions
 class DateTimeEncoder(json.JSONEncoder):
@@ -41,12 +43,7 @@ class MQTTClient:
         self.hub_id = hub_id
 
         # Configure logger
-        self.logger = logging.getLogger("AWSIoTPythonSDK.core")
-        self.logger.setLevel(log_level)
-        stream_handler = logging.StreamHandler()
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        stream_handler.setFormatter(formatter)
-        self.logger.addHandler(stream_handler)
+        self.logger = get_logger("AWSIoTPythonSDK.core", log_level)
 
         # Configure MQTT shadow client
         self.shadow_client = mqtt.AWSIoTMQTTShadowClient(client_id)

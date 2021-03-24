@@ -1,6 +1,6 @@
-[submodule "rpi-hub/alexa/seeed-voicecard"]
-	path = rpi-hub/alexa/seeed-voicecard
+[submodule "rpihub/alexa/seeed-voicecard"]
+	path = rpihub/alexa/seeed-voicecard
 	url = git@github.com:respeaker/seeed-voicecard.git
-[submodule "rpi-hub/alexa/4mics_hat"]
-	path = rpi-hub/alexa/4mics_hat
+[submodule "rpihub/alexa/4mics_hat"]
+	path = rpihub/alexa/4mics_hat
 	url = git@github.com:respeaker/4mics_hat.git
