@@ -1,11 +1,34 @@
+awscli==1.19.39
 AWSIoTPythonSDK==1.4.9
 bluepy==1.3.0
+botocore==1.20.39
+cachetools==4.2.1
+certifi==2020.12.5
+chardet==4.0.0
+click==7.1.2
+colorama==0.4.3
 colorzero==2.0
+docutils==0.15.2
+enum34==1.1.10
 gpiozero==1.5.1
+idna==2.10
+jmespath==0.10.0
 numpy==1.20.1
+oauthlib==3.1.0
+pathlib2==2.3.5
 pkg-resources==0.0.0
+pyasn1==0.4.8
+pyasn1-modules==0.2.8
+python-dateutil==2.8.1
+PyYAML==5.4
+requests==2.25.1
+requests-oauthlib==1.3.0
 rpi==0.0.1
 RPi.GPIO==0.7.0
--e git+git@github.com:aidan-clyens/FYDP.git@aee2a253e9272ee467a2270bf5df5658f1f6c0c9#egg=rpihub
+-e git+git@github.com:aidan-clyens/FYDP.git@d45b2c92bfb2beb1db43d474dbb281dfaaf17f6b#egg=rpihub
 RPIO==0.10.0
+rsa==4.5
+s3transfer==0.3.6
+six==1.15.0
 spidev==3.5
+urllib3==1.26.4

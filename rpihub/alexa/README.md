@@ -28,6 +28,16 @@ sudo apt-get install mplayer
 5. Run `./install.sh`
 6. Run the AVS SDK SampleApp for the first time and authorize using the code provided
 
+### AWS CLI
+1. Install AWS CLI version 1
+```
+pip3 install awscli
+```
+2. Configure AWS CLI
+```
+aws configure
+```
+
 ## Running
 `python3 run_alexa.py`
 
