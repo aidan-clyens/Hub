@@ -1,8 +1,11 @@
 import logging
+import logging.handlers as handlers
 import os
 
 
 log_path = "logs"
+log_file_size = 800 * 1000 # 800kB
+num_log_files = 10
 
 
 def create_log_dir():
@@ -23,7 +26,7 @@ def get_logger(name, log_level):
 
     # File Handler
     create_log_dir()
-    file_handler = logging.FileHandler(os.path.join(log_path, "log.log"))
+    file_handler = handlers.RotatingFileHandler(os.path.join(log_path, "log.log"), maxBytes=log_file_size, backupCount=num_log_files)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 

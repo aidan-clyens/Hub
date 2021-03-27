@@ -24,8 +24,8 @@ from alexa import VoiceEngine
 
 
 # Constants
-LOW_HEARTRATE = 60
-HIGH_HEARTRATE = 110
+LOW_HEARTRATE = 50
+HIGH_HEARTRATE = 165
 
 
 # Global variables
@@ -195,11 +195,12 @@ def ble_function(ble, device_address, topics, log_level, tts_data):
                         data["severity"] = "low"
 
                         if tts_data:
-                            text = f"Your most recent heart rate is {data['heartrate']} BPM"
-                            if data["spO2"] > 0:
-                                text += f" and oxygen level is {data['spO2']} %"
+                            if data["heartrate_confidence"] > 0:
+                                text = f"Your most recent heart rate is {data['heartrate']} BPM"
+                                if data["spO2"] > 0 and data["spO2"] <= 100:
+                                    text += f" and oxygen level is {data['spO2']} %"
                                     
-                            voice_engine_queue.put(text)
+                                voice_engine_queue.put(text)
 
                     # Update data
                     elif data["contact_status"] == "on_skin" and data["heartrate_confidence"] > 0:
